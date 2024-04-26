@@ -1,0 +1,545 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TimeOfImpact.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">jbox2d-library</a> &gt; <a href="index.source.html" class="el_package">org.jbox2d.collision</a> &gt; <span class="el_source">TimeOfImpact.java</span></div><h1>TimeOfImpact.java</h1><pre class="source lang-java linenums">/*******************************************************************************
+ * Copyright (c) 2013, Daniel Murphy
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ * 	* Redistributions of source code must retain the above copyright notice,
+ * 	  this list of conditions and the following disclaimer.
+ * 	* Redistributions in binary form must reproduce the above copyright notice,
+ * 	  this list of conditions and the following disclaimer in the documentation
+ * 	  and/or other materials provided with the distribution.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot; AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ ******************************************************************************/
+package org.jbox2d.collision;
+
+import org.jbox2d.collision.Distance.DistanceProxy;
+import org.jbox2d.collision.Distance.SimplexCache;
+import org.jbox2d.common.MathUtils;
+import org.jbox2d.common.Rot;
+import org.jbox2d.common.Settings;
+import org.jbox2d.common.Sweep;
+import org.jbox2d.common.Transform;
+import org.jbox2d.common.Vec2;
+import org.jbox2d.pooling.IWorldPool;
+
+/**
+ * Class used for computing the time of impact. This class should not be constructed usually, just
+ * retrieve from the {@link SingletonPool#getTOI()}.
+ * 
+ * @author daniel
+ */
+<span class="pc bpc" id="L42" title="1 of 2 branches missed.">public class TimeOfImpact {</span>
+  public static final int MAX_ITERATIONS = 1000;
+
+<span class="fc" id="L45">  public static int toiCalls = 0;</span>
+<span class="fc" id="L46">  public static int toiIters = 0;</span>
+<span class="fc" id="L47">  public static int toiMaxIters = 0;</span>
+<span class="fc" id="L48">  public static int toiRootIters = 0;</span>
+<span class="fc" id="L49">  public static int toiMaxRootIters = 0;</span>
+
+  /**
+   * Input parameters for TOI
+   * 
+   * @author Daniel Murphy
+   */
+<span class="nc" id="L56">  public static class TOIInput {</span>
+<span class="nc" id="L57">    public final DistanceProxy proxyA = new DistanceProxy();</span>
+<span class="nc" id="L58">    public final DistanceProxy proxyB = new DistanceProxy();</span>
+<span class="nc" id="L59">    public final Sweep sweepA = new Sweep();</span>
+<span class="nc" id="L60">    public final Sweep sweepB = new Sweep();</span>
+    /**
+     * defines sweep interval [0, tMax]
+     */
+    public float tMax;
+  }
+
+<span class="nc" id="L67">  public static enum TOIOutputState {</span>
+<span class="nc" id="L68">    UNKNOWN, FAILED, OVERLAPPED, TOUCHING, SEPARATED</span>
+  }
+
+  /**
+   * Output parameters for TimeOfImpact
+   * 
+   * @author daniel
+   */
+<span class="nc" id="L76">  public static class TOIOutput {</span>
+    public TOIOutputState state;
+    public float t;
+  }
+
+
+  // djm pooling
+<span class="fc" id="L83">  private final SimplexCache cache = new SimplexCache();</span>
+<span class="fc" id="L84">  private final DistanceInput distanceInput = new DistanceInput();</span>
+<span class="fc" id="L85">  private final Transform xfA = new Transform();</span>
+<span class="fc" id="L86">  private final Transform xfB = new Transform();</span>
+<span class="fc" id="L87">  private final DistanceOutput distanceOutput = new DistanceOutput();</span>
+<span class="fc" id="L88">  private final SeparationFunction fcn = new SeparationFunction();</span>
+<span class="fc" id="L89">  private final int[] indexes = new int[2];</span>
+<span class="fc" id="L90">  private final Sweep sweepA = new Sweep();</span>
+<span class="fc" id="L91">  private final Sweep sweepB = new Sweep();</span>
+
+
+  private final IWorldPool pool;
+
+<span class="fc" id="L96">  public TimeOfImpact(IWorldPool argPool) {</span>
+<span class="fc" id="L97">    pool = argPool;</span>
+<span class="fc" id="L98">  }</span>
+
+  /**
+   * Compute the upper bound on time before two shapes penetrate. Time is represented as a fraction
+   * between [0,tMax]. This uses a swept separating axis and may miss some intermediate,
+   * non-tunneling collision. If you change the time interval, you should call this function again.
+   * Note: use Distance to compute the contact point and normal at the time of impact.
+   * 
+   * @param output
+   * @param input
+   */
+  public final void timeOfImpact(TOIOutput output, TOIInput input) {
+    // CCD via the local separating axis method. This seeks progression
+    // by computing the largest time at which separation is maintained.
+
+<span class="nc" id="L113">    ++toiCalls;</span>
+
+<span class="nc" id="L115">    output.state = TOIOutputState.UNKNOWN;</span>
+<span class="nc" id="L116">    output.t = input.tMax;</span>
+
+<span class="nc" id="L118">    final DistanceProxy proxyA = input.proxyA;</span>
+<span class="nc" id="L119">    final DistanceProxy proxyB = input.proxyB;</span>
+
+<span class="nc" id="L121">    sweepA.set(input.sweepA);</span>
+<span class="nc" id="L122">    sweepB.set(input.sweepB);</span>
+
+    // Large rotations can make the root finder fail, so we normalize the
+    // sweep angles.
+<span class="nc" id="L126">    sweepA.normalize();</span>
+<span class="nc" id="L127">    sweepB.normalize();</span>
+
+<span class="nc" id="L129">    float tMax = input.tMax;</span>
+
+<span class="nc" id="L131">    float totalRadius = proxyA.m_radius + proxyB.m_radius;</span>
+    // djm: whats with all these constants?
+<span class="nc" id="L133">    float target = MathUtils.max(Settings.linearSlop, totalRadius - 3.0f * Settings.linearSlop);</span>
+<span class="nc" id="L134">    float tolerance = 0.25f * Settings.linearSlop;</span>
+
+<span class="nc bnc" id="L136" title="All 4 branches missed.">    assert (target &gt; tolerance);</span>
+
+<span class="nc" id="L138">    float t1 = 0f;</span>
+<span class="nc" id="L139">    int iter = 0;</span>
+
+<span class="nc" id="L141">    cache.count = 0;</span>
+<span class="nc" id="L142">    distanceInput.proxyA = input.proxyA;</span>
+<span class="nc" id="L143">    distanceInput.proxyB = input.proxyB;</span>
+<span class="nc" id="L144">    distanceInput.useRadii = false;</span>
+
+    // The outer loop progressively attempts to compute new separating axes.
+    // This loop terminates when an axis is repeated (no progress is made).
+    for (;;) {
+<span class="nc" id="L149">      sweepA.getTransform(xfA, t1);</span>
+<span class="nc" id="L150">      sweepB.getTransform(xfB, t1);</span>
+      // System.out.printf(&quot;sweepA: %f, %f, sweepB: %f, %f\n&quot;,
+      // sweepA.c.x, sweepA.c.y, sweepB.c.x, sweepB.c.y);
+      // Get the distance between shapes. We can also use the results
+      // to get a separating axis
+<span class="nc" id="L155">      distanceInput.transformA = xfA;</span>
+<span class="nc" id="L156">      distanceInput.transformB = xfB;</span>
+<span class="nc" id="L157">      pool.getDistance().distance(distanceOutput, cache, distanceInput);</span>
+
+      // System.out.printf(&quot;Dist: %f at points %f, %f and %f, %f.  %d iterations\n&quot;,
+      // distanceOutput.distance, distanceOutput.pointA.x, distanceOutput.pointA.y,
+      // distanceOutput.pointB.x, distanceOutput.pointB.y,
+      // distanceOutput.iterations);
+
+      // If the shapes are overlapped, we give up on continuous collision.
+<span class="nc bnc" id="L165" title="All 2 branches missed.">      if (distanceOutput.distance &lt;= 0f) {</span>
+        // System.out.println(&quot;failure, overlapped&quot;);
+        // Failure!
+<span class="nc" id="L168">        output.state = TOIOutputState.OVERLAPPED;</span>
+<span class="nc" id="L169">        output.t = 0f;</span>
+<span class="nc" id="L170">        break;</span>
+      }
+
+<span class="nc bnc" id="L173" title="All 2 branches missed.">      if (distanceOutput.distance &lt; target + tolerance) {</span>
+        // System.out.println(&quot;touching, victory&quot;);
+        // Victory!
+<span class="nc" id="L176">        output.state = TOIOutputState.TOUCHING;</span>
+<span class="nc" id="L177">        output.t = t1;</span>
+<span class="nc" id="L178">        break;</span>
+      }
+
+      // Initialize the separating axis.
+<span class="nc" id="L182">      fcn.initialize(cache, proxyA, sweepA, proxyB, sweepB, t1);</span>
+
+      // Compute the TOI on the separating axis. We do this by successively
+      // resolving the deepest point. This loop is bounded by the number of
+      // vertices.
+<span class="nc" id="L187">      boolean done = false;</span>
+<span class="nc" id="L188">      float t2 = tMax;</span>
+<span class="nc" id="L189">      int pushBackIter = 0;</span>
+      for (;;) {
+
+        // Find the deepest point at t2. Store the witness point indices.
+<span class="nc" id="L193">        float s2 = fcn.findMinSeparation(indexes, t2);</span>
+        // System.out.printf(&quot;s2: %f\n&quot;, s2);
+        // Is the final configuration separated?
+<span class="nc bnc" id="L196" title="All 2 branches missed.">        if (s2 &gt; target + tolerance) {</span>
+          // Victory!
+          // System.out.println(&quot;separated&quot;);
+<span class="nc" id="L199">          output.state = TOIOutputState.SEPARATED;</span>
+<span class="nc" id="L200">          output.t = tMax;</span>
+<span class="nc" id="L201">          done = true;</span>
+<span class="nc" id="L202">          break;</span>
+        }
+
+        // Has the separation reached tolerance?
+<span class="nc bnc" id="L206" title="All 2 branches missed.">        if (s2 &gt; target - tolerance) {</span>
+          // System.out.println(&quot;advancing&quot;);
+          // Advance the sweeps
+<span class="nc" id="L209">          t1 = t2;</span>
+<span class="nc" id="L210">          break;</span>
+        }
+
+        // Compute the initial separation of the witness points.
+<span class="nc" id="L214">        float s1 = fcn.evaluate(indexes[0], indexes[1], t1);</span>
+        // Check for initial overlap. This might happen if the root finder
+        // runs out of iterations.
+        // System.out.printf(&quot;s1: %f, target: %f, tolerance: %f\n&quot;, s1, target,
+        // tolerance);
+<span class="nc bnc" id="L219" title="All 2 branches missed.">        if (s1 &lt; target - tolerance) {</span>
+          // System.out.println(&quot;failed?&quot;);
+<span class="nc" id="L221">          output.state = TOIOutputState.FAILED;</span>
+<span class="nc" id="L222">          output.t = t1;</span>
+<span class="nc" id="L223">          done = true;</span>
+<span class="nc" id="L224">          break;</span>
+        }
+
+        // Check for touching
+<span class="nc bnc" id="L228" title="All 2 branches missed.">        if (s1 &lt;= target + tolerance) {</span>
+          // System.out.println(&quot;touching?&quot;);
+          // Victory! t1 should hold the TOI (could be 0.0).
+<span class="nc" id="L231">          output.state = TOIOutputState.TOUCHING;</span>
+<span class="nc" id="L232">          output.t = t1;</span>
+<span class="nc" id="L233">          done = true;</span>
+<span class="nc" id="L234">          break;</span>
+        }
+
+        // Compute 1D root of: f(x) - target = 0
+<span class="nc" id="L238">        int rootIterCount = 0;</span>
+<span class="nc" id="L239">        float a1 = t1, a2 = t2;</span>
+        for (;;) {
+          // Use a mix of the secant rule and bisection.
+          float t;
+<span class="nc bnc" id="L243" title="All 2 branches missed.">          if ((rootIterCount &amp; 1) == 1) {</span>
+            // Secant rule to improve convergence.
+<span class="nc" id="L245">            t = a1 + (target - s1) * (a2 - a1) / (s2 - s1);</span>
+          } else {
+            // Bisection to guarantee progress.
+<span class="nc" id="L248">            t = 0.5f * (a1 + a2);</span>
+          }
+
+<span class="nc" id="L251">          float s = fcn.evaluate(indexes[0], indexes[1], t);</span>
+
+<span class="nc bnc" id="L253" title="All 2 branches missed.">          if (MathUtils.abs(s - target) &lt; tolerance) {</span>
+            // t2 holds a tentative value for t1
+<span class="nc" id="L255">            t2 = t;</span>
+<span class="nc" id="L256">            break;</span>
+          }
+
+          // Ensure we continue to bracket the root.
+<span class="nc bnc" id="L260" title="All 2 branches missed.">          if (s &gt; target) {</span>
+<span class="nc" id="L261">            a1 = t;</span>
+<span class="nc" id="L262">            s1 = s;</span>
+          } else {
+<span class="nc" id="L264">            a2 = t;</span>
+<span class="nc" id="L265">            s2 = s;</span>
+          }
+
+<span class="nc" id="L268">          ++rootIterCount;</span>
+<span class="nc" id="L269">          ++toiRootIters;</span>
+
+          // djm: whats with this? put in settings?
+<span class="nc bnc" id="L272" title="All 2 branches missed.">          if (rootIterCount == 50) {</span>
+<span class="nc" id="L273">            break;</span>
+          }
+<span class="nc" id="L275">        }</span>
+
+<span class="nc" id="L277">        toiMaxRootIters = MathUtils.max(toiMaxRootIters, rootIterCount);</span>
+
+<span class="nc" id="L279">        ++pushBackIter;</span>
+
+<span class="nc bnc" id="L281" title="All 2 branches missed.">        if (pushBackIter == Settings.maxPolygonVertices) {</span>
+<span class="nc" id="L282">          break;</span>
+        }
+<span class="nc" id="L284">      }</span>
+
+<span class="nc" id="L286">      ++iter;</span>
+<span class="nc" id="L287">      ++toiIters;</span>
+
+<span class="nc bnc" id="L289" title="All 2 branches missed.">      if (done) {</span>
+        // System.out.println(&quot;done&quot;);
+<span class="nc" id="L291">        break;</span>
+      }
+
+<span class="nc bnc" id="L294" title="All 2 branches missed.">      if (iter == MAX_ITERATIONS) {</span>
+        // System.out.println(&quot;failed, root finder stuck&quot;);
+        // Root finder got stuck. Semi-victory.
+<span class="nc" id="L297">        output.state = TOIOutputState.FAILED;</span>
+<span class="nc" id="L298">        output.t = t1;</span>
+<span class="nc" id="L299">        break;</span>
+      }
+<span class="nc" id="L301">    }</span>
+
+    // System.out.printf(&quot;final sweeps: %f, %f, %f; %f, %f, %f&quot;, input.s)
+<span class="nc" id="L304">    toiMaxIters = MathUtils.max(toiMaxIters, iter);</span>
+<span class="nc" id="L305">  }</span>
+}
+
+
+<span class="nc" id="L309">enum Type {</span>
+<span class="nc" id="L310">  POINTS, FACE_A, FACE_B;</span>
+}
+
+
+<span class="pc bpc" id="L314" title="1 of 2 branches missed.">class SeparationFunction {</span>
+
+  public DistanceProxy m_proxyA;
+  public DistanceProxy m_proxyB;
+  public Type m_type;
+<span class="fc" id="L319">  public final Vec2 m_localPoint = new Vec2();</span>
+<span class="fc" id="L320">  public final Vec2 m_axis = new Vec2();</span>
+  public Sweep m_sweepA;
+  public Sweep m_sweepB;
+
+  // djm pooling
+<span class="fc" id="L325">  private final Vec2 localPointA = new Vec2();</span>
+<span class="fc" id="L326">  private final Vec2 localPointB = new Vec2();</span>
+<span class="fc" id="L327">  private final Vec2 pointA = new Vec2();</span>
+<span class="fc" id="L328">  private final Vec2 pointB = new Vec2();</span>
+<span class="fc" id="L329">  private final Vec2 localPointA1 = new Vec2();</span>
+<span class="fc" id="L330">  private final Vec2 localPointA2 = new Vec2();</span>
+<span class="fc" id="L331">  private final Vec2 normal = new Vec2();</span>
+<span class="fc" id="L332">  private final Vec2 localPointB1 = new Vec2();</span>
+<span class="fc" id="L333">  private final Vec2 localPointB2 = new Vec2();</span>
+<span class="fc" id="L334">  private final Vec2 temp = new Vec2();</span>
+<span class="fc" id="L335">  private final Transform xfa = new Transform();</span>
+<span class="fc" id="L336">  private final Transform xfb = new Transform();</span>
+
+  // TODO_ERIN might not need to return the separation
+
+  public float initialize(final SimplexCache cache, final DistanceProxy proxyA, final Sweep sweepA,
+      final DistanceProxy proxyB, final Sweep sweepB, float t1) {
+<span class="nc" id="L342">    m_proxyA = proxyA;</span>
+<span class="nc" id="L343">    m_proxyB = proxyB;</span>
+<span class="nc" id="L344">    int count = cache.count;</span>
+<span class="nc bnc" id="L345" title="All 6 branches missed.">    assert (0 &lt; count &amp;&amp; count &lt; 3);</span>
+
+<span class="nc" id="L347">    m_sweepA = sweepA;</span>
+<span class="nc" id="L348">    m_sweepB = sweepB;</span>
+
+<span class="nc" id="L350">    m_sweepA.getTransform(xfa, t1);</span>
+<span class="nc" id="L351">    m_sweepB.getTransform(xfb, t1);</span>
+
+    // log.debug(&quot;initializing separation.\n&quot; +
+    // &quot;cache: &quot;+cache.count+&quot;-&quot;+cache.metric+&quot;-&quot;+cache.indexA+&quot;-&quot;+cache.indexB+&quot;\n&quot;
+    // &quot;distance: &quot;+proxyA.
+
+<span class="nc bnc" id="L357" title="All 2 branches missed.">    if (count == 1) {</span>
+<span class="nc" id="L358">      m_type = Type.POINTS;</span>
+      /*
+       * Vec2 localPointA = m_proxyA.GetVertex(cache.indexA[0]); Vec2 localPointB =
+       * m_proxyB.GetVertex(cache.indexB[0]); Vec2 pointA = Mul(transformA, localPointA); Vec2
+       * pointB = Mul(transformB, localPointB); m_axis = pointB - pointA; m_axis.Normalize();
+       */
+<span class="nc" id="L364">      localPointA.set(m_proxyA.getVertex(cache.indexA[0]));</span>
+<span class="nc" id="L365">      localPointB.set(m_proxyB.getVertex(cache.indexB[0]));</span>
+<span class="nc" id="L366">      Transform.mulToOutUnsafe(xfa, localPointA, pointA);</span>
+<span class="nc" id="L367">      Transform.mulToOutUnsafe(xfb, localPointB, pointB);</span>
+<span class="nc" id="L368">      m_axis.set(pointB).subLocal(pointA);</span>
+<span class="nc" id="L369">      float s = m_axis.normalize();</span>
+<span class="nc" id="L370">      return s;</span>
+<span class="nc bnc" id="L371" title="All 2 branches missed.">    } else if (cache.indexA[0] == cache.indexA[1]) {</span>
+      // Two points on B and one on A.
+<span class="nc" id="L373">      m_type = Type.FACE_B;</span>
+
+<span class="nc" id="L375">      localPointB1.set(m_proxyB.getVertex(cache.indexB[0]));</span>
+<span class="nc" id="L376">      localPointB2.set(m_proxyB.getVertex(cache.indexB[1]));</span>
+
+<span class="nc" id="L378">      temp.set(localPointB2).subLocal(localPointB1);</span>
+<span class="nc" id="L379">      Vec2.crossToOutUnsafe(temp, 1f, m_axis);</span>
+<span class="nc" id="L380">      m_axis.normalize();</span>
+
+<span class="nc" id="L382">      Rot.mulToOutUnsafe(xfb.q, m_axis, normal);</span>
+
+<span class="nc" id="L384">      m_localPoint.set(localPointB1).addLocal(localPointB2).mulLocal(.5f);</span>
+<span class="nc" id="L385">      Transform.mulToOutUnsafe(xfb, m_localPoint, pointB);</span>
+
+<span class="nc" id="L387">      localPointA.set(proxyA.getVertex(cache.indexA[0]));</span>
+<span class="nc" id="L388">      Transform.mulToOutUnsafe(xfa, localPointA, pointA);</span>
+
+<span class="nc" id="L390">      temp.set(pointA).subLocal(pointB);</span>
+<span class="nc" id="L391">      float s = Vec2.dot(temp, normal);</span>
+<span class="nc bnc" id="L392" title="All 2 branches missed.">      if (s &lt; 0.0f) {</span>
+<span class="nc" id="L393">        m_axis.negateLocal();</span>
+<span class="nc" id="L394">        s = -s;</span>
+      }
+<span class="nc" id="L396">      return s;</span>
+    } else {
+      // Two points on A and one or two points on B.
+<span class="nc" id="L399">      m_type = Type.FACE_A;</span>
+
+<span class="nc" id="L401">      localPointA1.set(m_proxyA.getVertex(cache.indexA[0]));</span>
+<span class="nc" id="L402">      localPointA2.set(m_proxyA.getVertex(cache.indexA[1]));</span>
+
+<span class="nc" id="L404">      temp.set(localPointA2).subLocal(localPointA1);</span>
+<span class="nc" id="L405">      Vec2.crossToOutUnsafe(temp, 1.0f, m_axis);</span>
+<span class="nc" id="L406">      m_axis.normalize();</span>
+
+<span class="nc" id="L408">      Rot.mulToOutUnsafe(xfa.q, m_axis, normal);</span>
+
+<span class="nc" id="L410">      m_localPoint.set(localPointA1).addLocal(localPointA2).mulLocal(.5f);</span>
+<span class="nc" id="L411">      Transform.mulToOutUnsafe(xfa, m_localPoint, pointA);</span>
+
+<span class="nc" id="L413">      localPointB.set(m_proxyB.getVertex(cache.indexB[0]));</span>
+<span class="nc" id="L414">      Transform.mulToOutUnsafe(xfb, localPointB, pointB);</span>
+
+<span class="nc" id="L416">      temp.set(pointB).subLocal(pointA);</span>
+<span class="nc" id="L417">      float s = Vec2.dot(temp, normal);</span>
+<span class="nc bnc" id="L418" title="All 2 branches missed.">      if (s &lt; 0.0f) {</span>
+<span class="nc" id="L419">        m_axis.negateLocal();</span>
+<span class="nc" id="L420">        s = -s;</span>
+      }
+<span class="nc" id="L422">      return s;</span>
+    }
+  }
+
+<span class="fc" id="L426">  private final Vec2 axisA = new Vec2();</span>
+<span class="fc" id="L427">  private final Vec2 axisB = new Vec2();</span>
+
+  // float FindMinSeparation(int* indexA, int* indexB, float t) const
+  public float findMinSeparation(int[] indexes, float t) {
+
+<span class="nc" id="L432">    m_sweepA.getTransform(xfa, t);</span>
+<span class="nc" id="L433">    m_sweepB.getTransform(xfb, t);</span>
+
+<span class="nc bnc" id="L435" title="All 4 branches missed.">    switch (m_type) {</span>
+      case POINTS: {
+<span class="nc" id="L437">        Rot.mulTransUnsafe(xfa.q, m_axis, axisA);</span>
+<span class="nc" id="L438">        Rot.mulTransUnsafe(xfb.q, m_axis.negateLocal(), axisB);</span>
+<span class="nc" id="L439">        m_axis.negateLocal();</span>
+
+<span class="nc" id="L441">        indexes[0] = m_proxyA.getSupport(axisA);</span>
+<span class="nc" id="L442">        indexes[1] = m_proxyB.getSupport(axisB);</span>
+
+<span class="nc" id="L444">        localPointA.set(m_proxyA.getVertex(indexes[0]));</span>
+<span class="nc" id="L445">        localPointB.set(m_proxyB.getVertex(indexes[1]));</span>
+
+<span class="nc" id="L447">        Transform.mulToOutUnsafe(xfa, localPointA, pointA);</span>
+<span class="nc" id="L448">        Transform.mulToOutUnsafe(xfb, localPointB, pointB);</span>
+
+<span class="nc" id="L450">        float separation = Vec2.dot(pointB.subLocal(pointA), m_axis);</span>
+<span class="nc" id="L451">        return separation;</span>
+      }
+      case FACE_A: {
+<span class="nc" id="L454">        Rot.mulToOutUnsafe(xfa.q, m_axis, normal);</span>
+<span class="nc" id="L455">        Transform.mulToOutUnsafe(xfa, m_localPoint, pointA);</span>
+
+<span class="nc" id="L457">        Rot.mulTransUnsafe(xfb.q, normal.negateLocal(), axisB);</span>
+<span class="nc" id="L458">        normal.negateLocal();</span>
+
+<span class="nc" id="L460">        indexes[0] = -1;</span>
+<span class="nc" id="L461">        indexes[1] = m_proxyB.getSupport(axisB);</span>
+
+<span class="nc" id="L463">        localPointB.set(m_proxyB.getVertex(indexes[1]));</span>
+<span class="nc" id="L464">        Transform.mulToOutUnsafe(xfb, localPointB, pointB);</span>
+
+<span class="nc" id="L466">        float separation = Vec2.dot(pointB.subLocal(pointA), normal);</span>
+<span class="nc" id="L467">        return separation;</span>
+      }
+      case FACE_B: {
+<span class="nc" id="L470">        Rot.mulToOutUnsafe(xfb.q, m_axis, normal);</span>
+<span class="nc" id="L471">        Transform.mulToOutUnsafe(xfb, m_localPoint, pointB);</span>
+
+<span class="nc" id="L473">        Rot.mulTransUnsafe(xfa.q, normal.negateLocal(), axisA);</span>
+<span class="nc" id="L474">        normal.negateLocal();</span>
+
+<span class="nc" id="L476">        indexes[1] = -1;</span>
+<span class="nc" id="L477">        indexes[0] = m_proxyA.getSupport(axisA);</span>
+
+<span class="nc" id="L479">        localPointA.set(m_proxyA.getVertex(indexes[0]));</span>
+<span class="nc" id="L480">        Transform.mulToOutUnsafe(xfa, localPointA, pointA);</span>
+
+<span class="nc" id="L482">        float separation = Vec2.dot(pointA.subLocal(pointB), normal);</span>
+<span class="nc" id="L483">        return separation;</span>
+      }
+      default:
+<span class="nc bnc" id="L486" title="All 2 branches missed.">        assert (false);</span>
+<span class="nc" id="L487">        indexes[0] = -1;</span>
+<span class="nc" id="L488">        indexes[1] = -1;</span>
+<span class="nc" id="L489">        return 0f;</span>
+    }
+  }
+
+  public float evaluate(int indexA, int indexB, float t) {
+<span class="nc" id="L494">    m_sweepA.getTransform(xfa, t);</span>
+<span class="nc" id="L495">    m_sweepB.getTransform(xfb, t);</span>
+
+<span class="nc bnc" id="L497" title="All 4 branches missed.">    switch (m_type) {</span>
+      case POINTS: {
+<span class="nc" id="L499">        Rot.mulTransUnsafe(xfa.q, m_axis, axisA);</span>
+<span class="nc" id="L500">        Rot.mulTransUnsafe(xfb.q, m_axis.negateLocal(), axisB);</span>
+<span class="nc" id="L501">        m_axis.negateLocal();</span>
+
+<span class="nc" id="L503">        localPointA.set(m_proxyA.getVertex(indexA));</span>
+<span class="nc" id="L504">        localPointB.set(m_proxyB.getVertex(indexB));</span>
+
+<span class="nc" id="L506">        Transform.mulToOutUnsafe(xfa, localPointA, pointA);</span>
+<span class="nc" id="L507">        Transform.mulToOutUnsafe(xfb, localPointB, pointB);</span>
+
+<span class="nc" id="L509">        float separation = Vec2.dot(pointB.subLocal(pointA), m_axis);</span>
+<span class="nc" id="L510">        return separation;</span>
+      }
+      case FACE_A: {
+        // System.out.printf(&quot;We're faceA\n&quot;);
+<span class="nc" id="L514">        Rot.mulToOutUnsafe(xfa.q, m_axis, normal);</span>
+<span class="nc" id="L515">        Transform.mulToOutUnsafe(xfa, m_localPoint, pointA);</span>
+
+<span class="nc" id="L517">        Rot.mulTransUnsafe(xfb.q, normal.negateLocal(), axisB);</span>
+<span class="nc" id="L518">        normal.negateLocal();</span>
+
+<span class="nc" id="L520">        localPointB.set(m_proxyB.getVertex(indexB));</span>
+<span class="nc" id="L521">        Transform.mulToOutUnsafe(xfb, localPointB, pointB);</span>
+<span class="nc" id="L522">        float separation = Vec2.dot(pointB.subLocal(pointA), normal);</span>
+<span class="nc" id="L523">        return separation;</span>
+      }
+      case FACE_B: {
+        // System.out.printf(&quot;We're faceB\n&quot;);
+<span class="nc" id="L527">        Rot.mulToOutUnsafe(xfb.q, m_axis, normal);</span>
+<span class="nc" id="L528">        Transform.mulToOutUnsafe(xfb, m_localPoint, pointB);</span>
+
+<span class="nc" id="L530">        Rot.mulTransUnsafe(xfa.q, normal.negateLocal(), axisA);</span>
+<span class="nc" id="L531">        normal.negateLocal();</span>
+
+<span class="nc" id="L533">        localPointA.set(m_proxyA.getVertex(indexA));</span>
+<span class="nc" id="L534">        Transform.mulToOutUnsafe(xfa, localPointA, pointA);</span>
+
+<span class="nc" id="L536">        float separation = Vec2.dot(pointA.subLocal(pointB), normal);</span>
+<span class="nc" id="L537">        return separation;</span>
+      }
+      default:
+<span class="nc bnc" id="L540" title="All 2 branches missed.">        assert (false);</span>
+<span class="nc" id="L541">        return 0f;</span>
+    }
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BroadPhase.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">jbox2d-library</a> &gt; <a href="index.source.html" class="el_package">org.jbox2d.collision.broadphase</a> &gt; <span class="el_source">BroadPhase.java</span></div><h1>BroadPhase.java</h1><pre class="source lang-java linenums">/*******************************************************************************
+ * Copyright (c) 2013, Daniel Murphy
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ * 	* Redistributions of source code must retain the above copyright notice,
+ * 	  this list of conditions and the following disclaimer.
+ * 	* Redistributions in binary form must reproduce the above copyright notice,
+ * 	  this list of conditions and the following disclaimer in the documentation
+ * 	  and/or other materials provided with the distribution.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot; AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ ******************************************************************************/
+package org.jbox2d.collision.broadphase;
+
+import java.util.Arrays;
+
+import org.jbox2d.callbacks.DebugDraw;
+import org.jbox2d.callbacks.PairCallback;
+import org.jbox2d.callbacks.TreeCallback;
+import org.jbox2d.callbacks.TreeRayCastCallback;
+import org.jbox2d.collision.AABB;
+import org.jbox2d.collision.RayCastInput;
+import org.jbox2d.common.Vec2;
+
+/**
+ * The broad-phase is used for computing pairs and performing volume queries and ray casts. This
+ * broad-phase does not persist pairs. Instead, this reports potentially new pairs. It is up to the
+ * client to consume the new pairs and to track subsequent overlap.
+ * 
+ * @author Daniel Murphy
+ */
+public class BroadPhase implements TreeCallback {
+
+  public static final int NULL_PROXY = -1;
+
+  private final BroadPhaseStrategy m_tree;
+
+  private int m_proxyCount;
+
+  private int[] m_moveBuffer;
+  private int m_moveCapacity;
+  private int m_moveCount;
+
+  private Pair[] m_pairBuffer;
+  private int m_pairCapacity;
+  private int m_pairCount;
+
+  private int m_queryProxyId;
+
+<span class="nc" id="L61">  public BroadPhase(BroadPhaseStrategy strategy) {</span>
+<span class="nc" id="L62">    m_proxyCount = 0;</span>
+
+<span class="nc" id="L64">    m_pairCapacity = 16;</span>
+<span class="nc" id="L65">    m_pairCount = 0;</span>
+<span class="nc" id="L66">    m_pairBuffer = new Pair[m_pairCapacity];</span>
+<span class="nc bnc" id="L67" title="All 2 branches missed.">    for (int i = 0; i &lt; m_pairCapacity; i++) {</span>
+<span class="nc" id="L68">      m_pairBuffer[i] = new Pair();</span>
+    }
+
+<span class="nc" id="L71">    m_moveCapacity = 16;</span>
+<span class="nc" id="L72">    m_moveCount = 0;</span>
+<span class="nc" id="L73">    m_moveBuffer = new int[m_moveCapacity];</span>
+
+<span class="nc" id="L75">    m_tree = strategy;</span>
+<span class="nc" id="L76">    m_queryProxyId = NULL_PROXY;</span>
+<span class="nc" id="L77">  }</span>
+
+  /**
+   * Create a proxy with an initial AABB. Pairs are not reported until updatePairs is called.
+   * 
+   * @param aabb
+   * @param userData
+   * @return
+   */
+  public final int createProxy(final AABB aabb, Object userData) {
+<span class="nc" id="L87">    int proxyId = m_tree.createProxy(aabb, userData);</span>
+<span class="nc" id="L88">    ++m_proxyCount;</span>
+<span class="nc" id="L89">    bufferMove(proxyId);</span>
+<span class="nc" id="L90">    return proxyId;</span>
+  }
+
+  /**
+   * Destroy a proxy. It is up to the client to remove any pairs.
+   * 
+   * @param proxyId
+   */
+  public final void destroyProxy(int proxyId) {
+<span class="nc" id="L99">    unbufferMove(proxyId);</span>
+<span class="nc" id="L100">    --m_proxyCount;</span>
+<span class="nc" id="L101">    m_tree.destroyProxy(proxyId);</span>
+<span class="nc" id="L102">  }</span>
+
+  /**
+   * Call MoveProxy as many times as you like, then when you are done call UpdatePairs to finalized
+   * the proxy pairs (for your time step).
+   */
+  public final void moveProxy(int proxyId, final AABB aabb, final Vec2 displacement) {
+<span class="nc" id="L109">    boolean buffer = m_tree.moveProxy(proxyId, aabb, displacement);</span>
+<span class="nc bnc" id="L110" title="All 2 branches missed.">    if (buffer) {</span>
+<span class="nc" id="L111">      bufferMove(proxyId);</span>
+    }
+<span class="nc" id="L113">  }</span>
+
+  public void touchProxy(int proxyId) {
+<span class="nc" id="L116">    bufferMove(proxyId);</span>
+<span class="nc" id="L117">  }</span>
+
+  public Object getUserData(int proxyId) {
+<span class="nc" id="L120">    return m_tree.getUserData(proxyId);</span>
+  }
+
+  public AABB getFatAABB(int proxyId) {
+<span class="nc" id="L124">    return m_tree.getFatAABB(proxyId);</span>
+  }
+
+  public boolean testOverlap(int proxyIdA, int proxyIdB) {
+    // return AABB.testOverlap(proxyA.aabb, proxyB.aabb);
+<span class="nc" id="L129">    final AABB a = m_tree.getFatAABB(proxyIdA);</span>
+<span class="nc" id="L130">    final AABB b = m_tree.getFatAABB(proxyIdB);</span>
+<span class="nc bnc" id="L131" title="All 4 branches missed.">    if (b.lowerBound.x - a.upperBound.x &gt; 0.0f || b.lowerBound.y - a.upperBound.y &gt; 0.0f) {</span>
+<span class="nc" id="L132">      return false;</span>
+    }
+
+<span class="nc bnc" id="L135" title="All 4 branches missed.">    if (a.lowerBound.x - b.upperBound.x &gt; 0.0f || a.lowerBound.y - b.upperBound.y &gt; 0.0f) {</span>
+<span class="nc" id="L136">      return false;</span>
+    }
+
+<span class="nc" id="L139">    return true;</span>
+  }
+
+  /**
+   * Get the number of proxies.
+   * 
+   * @return
+   */
+  public final int getProxyCount() {
+<span class="nc" id="L148">    return m_proxyCount;</span>
+  }
+
+  public void drawTree(DebugDraw argDraw) {
+<span class="nc" id="L152">    m_tree.drawTree(argDraw);</span>
+<span class="nc" id="L153">  }</span>
+
+  /**
+   * Update the pairs. This results in pair callbacks. This can only add pairs.
+   * 
+   * @param callback
+   */
+  public final void updatePairs(PairCallback callback) {
+    // log.debug(&quot;beginning to update pairs&quot;);
+    // Reset pair buffer
+<span class="nc" id="L163">    m_pairCount = 0;</span>
+
+    // Perform tree queries for all moving proxies.
+<span class="nc bnc" id="L166" title="All 2 branches missed.">    for (int i = 0; i &lt; m_moveCount; ++i) {</span>
+<span class="nc" id="L167">      m_queryProxyId = m_moveBuffer[i];</span>
+<span class="nc bnc" id="L168" title="All 2 branches missed.">      if (m_queryProxyId == NULL_PROXY) {</span>
+<span class="nc" id="L169">        continue;</span>
+      }
+
+      // We have to query the tree with the fat AABB so that
+      // we don't fail to create a pair that may touch later.
+<span class="nc" id="L174">      final AABB fatAABB = m_tree.getFatAABB(m_queryProxyId);</span>
+
+      // Query tree, create pairs and add them pair buffer.
+      // log.debug(&quot;quering aabb: &quot;+m_queryProxy.aabb);
+<span class="nc" id="L178">      m_tree.query(this, fatAABB);</span>
+    }
+    // log.debug(&quot;Number of pairs found: &quot;+m_pairCount);
+
+    // Reset move buffer
+<span class="nc" id="L183">    m_moveCount = 0;</span>
+
+    // Sort the pair buffer to expose duplicates.
+<span class="nc" id="L186">    Arrays.sort(m_pairBuffer, 0, m_pairCount);</span>
+
+    // Send the pairs back to the client.
+<span class="nc" id="L189">    int i = 0;</span>
+<span class="nc bnc" id="L190" title="All 2 branches missed.">    while (i &lt; m_pairCount) {</span>
+<span class="nc" id="L191">      Pair primaryPair = m_pairBuffer[i];</span>
+<span class="nc" id="L192">      Object userDataA = m_tree.getUserData(primaryPair.proxyIdA);</span>
+<span class="nc" id="L193">      Object userDataB = m_tree.getUserData(primaryPair.proxyIdB);</span>
+
+      // log.debug(&quot;returning pair: &quot;+userDataA+&quot;, &quot;+userDataB);
+<span class="nc" id="L196">      callback.addPair(userDataA, userDataB);</span>
+<span class="nc" id="L197">      ++i;</span>
+
+      // Skip any duplicate pairs.
+<span class="nc bnc" id="L200" title="All 2 branches missed.">      while (i &lt; m_pairCount) {</span>
+<span class="nc" id="L201">        Pair pair = m_pairBuffer[i];</span>
+<span class="nc bnc" id="L202" title="All 4 branches missed.">        if (pair.proxyIdA != primaryPair.proxyIdA || pair.proxyIdB != primaryPair.proxyIdB) {</span>
+<span class="nc" id="L203">          break;</span>
+        }
+        // log.debug(&quot;skipping duplicate&quot;);
+<span class="nc" id="L206">        ++i;</span>
+<span class="nc" id="L207">      }</span>
+<span class="nc" id="L208">    }</span>
+
+    // Try to keep the tree balanced.
+    // m_tree.rebalance(Settings.TREE_REBALANCE_STEPS);
+<span class="nc" id="L212">  }</span>
+
+  /**
+   * Query an AABB for overlapping proxies. The callback class is called for each proxy that
+   * overlaps the supplied AABB.
+   * 
+   * @param callback
+   * @param aabb
+   */
+  public final void query(final TreeCallback callback, final AABB aabb) {
+<span class="nc" id="L222">    m_tree.query(callback, aabb);</span>
+<span class="nc" id="L223">  }</span>
+
+  /**
+   * Ray-cast against the proxies in the tree. This relies on the callback to perform a exact
+   * ray-cast in the case were the proxy contains a shape. The callback also performs the any
+   * collision filtering. This has performance roughly equal to k * log(n), where k is the number of
+   * collisions and n is the number of proxies in the tree.
+   * 
+   * @param input the ray-cast input data. The ray extends from p1 to p1 + maxFraction * (p2 - p1).
+   * @param callback a callback class that is called for each proxy that is hit by the ray.
+   */
+  public final void raycast(final TreeRayCastCallback callback, final RayCastInput input) {
+<span class="nc" id="L235">    m_tree.raycast(callback, input);</span>
+<span class="nc" id="L236">  }</span>
+
+  /**
+   * Get the height of the embedded tree.
+   * 
+   * @return
+   */
+  public final int getTreeHeight() {
+<span class="nc" id="L244">    return m_tree.computeHeight();</span>
+  }
+
+  public int getTreeBalance() {
+<span class="nc" id="L248">    return m_tree.getMaxBalance();</span>
+  }
+
+  public float getTreeQuality() {
+<span class="nc" id="L252">    return m_tree.getAreaRatio();</span>
+  }
+
+  protected final void bufferMove(int proxyId) {
+<span class="nc bnc" id="L256" title="All 2 branches missed.">    if (m_moveCount == m_moveCapacity) {</span>
+<span class="nc" id="L257">      int[] old = m_moveBuffer;</span>
+<span class="nc" id="L258">      m_moveCapacity *= 2;</span>
+<span class="nc" id="L259">      m_moveBuffer = new int[m_moveCapacity];</span>
+<span class="nc" id="L260">      System.arraycopy(old, 0, m_moveBuffer, 0, old.length);</span>
+    }
+
+<span class="nc" id="L263">    m_moveBuffer[m_moveCount] = proxyId;</span>
+<span class="nc" id="L264">    ++m_moveCount;</span>
+<span class="nc" id="L265">  }</span>
+
+  protected final void unbufferMove(int proxyId) {
+<span class="nc bnc" id="L268" title="All 2 branches missed.">    for (int i = 0; i &lt; m_moveCount; i++) {</span>
+<span class="nc bnc" id="L269" title="All 2 branches missed.">      if (m_moveBuffer[i] == proxyId) {</span>
+<span class="nc" id="L270">        m_moveBuffer[i] = NULL_PROXY;</span>
+      }
+    }
+<span class="nc" id="L273">  }</span>
+
+  // private final PairStack pairStack = new PairStack();
+  /**
+   * This is called from DynamicTree::query when we are gathering pairs.
+   */
+  public final boolean treeCallback(int proxyId) {
+    // A proxy cannot form a pair with itself.
+<span class="nc bnc" id="L281" title="All 2 branches missed.">    if (proxyId == m_queryProxyId) {</span>
+      // log.debug(&quot;It was us...&quot;);
+<span class="nc" id="L283">      return true;</span>
+    }
+
+    // Grow the pair buffer as needed.
+<span class="nc bnc" id="L287" title="All 2 branches missed.">    if (m_pairCount == m_pairCapacity) {</span>
+<span class="nc" id="L288">      Pair[] oldBuffer = m_pairBuffer;</span>
+<span class="nc" id="L289">      m_pairCapacity *= 2;</span>
+<span class="nc" id="L290">      m_pairBuffer = new Pair[m_pairCapacity];</span>
+<span class="nc" id="L291">      System.arraycopy(oldBuffer, 0, m_pairBuffer, 0, oldBuffer.length);</span>
+<span class="nc bnc" id="L292" title="All 2 branches missed.">      for (int i = oldBuffer.length; i &lt; m_pairCapacity; i++) {</span>
+<span class="nc" id="L293">        m_pairBuffer[i] = new Pair();</span>
+      }
+    }
+
+<span class="nc bnc" id="L297" title="All 2 branches missed.">    if (proxyId &lt; m_queryProxyId) {</span>
+      // log.debug(&quot;new proxy is first&quot;);
+<span class="nc" id="L299">      m_pairBuffer[m_pairCount].proxyIdA = proxyId;</span>
+<span class="nc" id="L300">      m_pairBuffer[m_pairCount].proxyIdB = m_queryProxyId;</span>
+    } else {
+      // log.debug(&quot;new proxy is second&quot;);
+<span class="nc" id="L303">      m_pairBuffer[m_pairCount].proxyIdA = m_queryProxyId;</span>
+<span class="nc" id="L304">      m_pairBuffer[m_pairCount].proxyIdB = proxyId;</span>
+    }
+
+<span class="nc" id="L307">    ++m_pairCount;</span>
+<span class="nc" id="L308">    return true;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

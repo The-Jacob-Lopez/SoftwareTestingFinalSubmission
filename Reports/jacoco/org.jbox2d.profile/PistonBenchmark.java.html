@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PistonBenchmark.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">jbox2d-library</a> &gt; <a href="index.source.html" class="el_package">org.jbox2d.profile</a> &gt; <span class="el_source">PistonBenchmark.java</span></div><h1>PistonBenchmark.java</h1><pre class="source lang-java linenums">/*******************************************************************************
+ * Copyright (c) 2013, Daniel Murphy
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ * 	* Redistributions of source code must retain the above copyright notice,
+ * 	  this list of conditions and the following disclaimer.
+ * 	* Redistributions in binary form must reproduce the above copyright notice,
+ * 	  this list of conditions and the following disclaimer in the documentation
+ * 	  and/or other materials provided with the distribution.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot; AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ ******************************************************************************/
+package org.jbox2d.profile;
+
+import org.jbox2d.collision.broadphase.BroadPhaseStrategy;
+import org.jbox2d.collision.broadphase.DynamicTree;
+import org.jbox2d.collision.shapes.CircleShape;
+import org.jbox2d.collision.shapes.PolygonShape;
+import org.jbox2d.common.MathUtils;
+import org.jbox2d.common.Vec2;
+import org.jbox2d.dynamics.Body;
+import org.jbox2d.dynamics.BodyDef;
+import org.jbox2d.dynamics.BodyType;
+import org.jbox2d.dynamics.FixtureDef;
+import org.jbox2d.dynamics.World;
+import org.jbox2d.dynamics.joints.PrismaticJoint;
+import org.jbox2d.dynamics.joints.PrismaticJointDef;
+import org.jbox2d.dynamics.joints.RevoluteJoint;
+import org.jbox2d.dynamics.joints.RevoluteJointDef;
+import org.jbox2d.pooling.normal.DefaultWorldPool;
+
+/**
+ * Benchmark - piston example (constantly bumping a bunch of circles and boxes). Should be a decent
+ * mix of circle and polygon collisions/contacts, though very little joint work.
+ * 
+ * NOTE: some iterations cause objects to fall through the piston
+ * 
+ */
+public class PistonBenchmark extends SettingsPerformanceTest {
+<span class="nc" id="L51">  public static int iters = 5;</span>
+<span class="nc" id="L52">  public static int frames = 800;</span>
+<span class="nc" id="L53">  public static float timeStep = 1f / 60;</span>
+<span class="nc" id="L54">  public static int velIters = 8;</span>
+<span class="nc" id="L55">  public static int posIters = 3;</span>
+
+  public RevoluteJoint m_joint1;
+  public PrismaticJoint m_joint2;
+  public World world;
+
+  public PistonBenchmark() {
+<span class="nc" id="L62">    super(iters);</span>
+<span class="nc" id="L63">  }</span>
+
+  public static void main(String[] args) {
+<span class="nc" id="L66">    PistonBenchmark benchmark = new PistonBenchmark();</span>
+<span class="nc" id="L67">    benchmark.go();</span>
+<span class="nc" id="L68">  }</span>
+
+  @Override
+  public void runBenchmarkWorld() {
+<span class="nc" id="L72">    BroadPhaseStrategy strategy = new DynamicTree();</span>
+
+<span class="nc" id="L74">    world = new World(new Vec2(0.0f, -10.0f), new DefaultWorldPool(100, 10), strategy);</span>
+<span class="nc" id="L75">    Body ground = null;</span>
+    {
+<span class="nc" id="L77">      BodyDef bd = new BodyDef();</span>
+<span class="nc" id="L78">      ground = world.createBody(bd);</span>
+
+<span class="nc" id="L80">      PolygonShape shape = new PolygonShape();</span>
+<span class="nc" id="L81">      shape.setAsBox(5.0f, 100.0f);</span>
+<span class="nc" id="L82">      bd = new BodyDef();</span>
+<span class="nc" id="L83">      bd.type = BodyType.STATIC;</span>
+<span class="nc" id="L84">      FixtureDef sides = new FixtureDef();</span>
+<span class="nc" id="L85">      sides.shape = shape;</span>
+<span class="nc" id="L86">      sides.density = 0;</span>
+<span class="nc" id="L87">      sides.friction = 0;</span>
+<span class="nc" id="L88">      sides.restitution = .8f;</span>
+<span class="nc" id="L89">      sides.filter.categoryBits = 4;</span>
+<span class="nc" id="L90">      sides.filter.maskBits = 2;</span>
+
+<span class="nc" id="L92">      bd.position.set(-10.01f, 50.0f);</span>
+<span class="nc" id="L93">      Body bod = world.createBody(bd);</span>
+<span class="nc" id="L94">      bod.createFixture(sides);</span>
+<span class="nc" id="L95">      bd.position.set(10.01f, 50.0f);</span>
+<span class="nc" id="L96">      bod = world.createBody(bd);</span>
+<span class="nc" id="L97">      bod.createFixture(sides);</span>
+    }
+
+    // turney
+    {
+      CircleShape cd;
+<span class="nc" id="L103">      FixtureDef fd = new FixtureDef();</span>
+<span class="nc" id="L104">      BodyDef bd = new BodyDef();</span>
+<span class="nc" id="L105">      bd.type = BodyType.DYNAMIC;</span>
+<span class="nc" id="L106">      int numPieces = 5;</span>
+<span class="nc" id="L107">      float radius = 4f;</span>
+<span class="nc" id="L108">      bd.position = new Vec2(0.0f, 25.0f);</span>
+<span class="nc" id="L109">      Body body = world.createBody(bd);</span>
+<span class="nc bnc" id="L110" title="All 2 branches missed.">      for (int i = 0; i &lt; numPieces; i++) {</span>
+<span class="nc" id="L111">        cd = new CircleShape();</span>
+<span class="nc" id="L112">        cd.m_radius = .5f;</span>
+<span class="nc" id="L113">        fd.shape = cd;</span>
+<span class="nc" id="L114">        fd.density = 25;</span>
+<span class="nc" id="L115">        fd.friction = .1f;</span>
+<span class="nc" id="L116">        fd.restitution = .9f;</span>
+<span class="nc" id="L117">        float xPos = radius * (float) Math.cos(2f * Math.PI * (i / (float) (numPieces)));</span>
+<span class="nc" id="L118">        float yPos = radius * (float) Math.sin(2f * Math.PI * (i / (float) (numPieces)));</span>
+<span class="nc" id="L119">        cd.m_p.set(xPos, yPos);</span>
+
+<span class="nc" id="L121">        body.createFixture(fd);</span>
+      }
+
+<span class="nc" id="L124">      RevoluteJointDef rjd = new RevoluteJointDef();</span>
+<span class="nc" id="L125">      rjd.initialize(body, ground, body.getPosition());</span>
+<span class="nc" id="L126">      rjd.motorSpeed = MathUtils.PI;</span>
+<span class="nc" id="L127">      rjd.maxMotorTorque = 1000000.0f;</span>
+<span class="nc" id="L128">      rjd.enableMotor = true;</span>
+<span class="nc" id="L129">      world.createJoint(rjd);</span>
+    }
+
+    {
+<span class="nc" id="L133">      Body prevBody = ground;</span>
+
+      // Define crank.
+      {
+<span class="nc" id="L137">        PolygonShape shape = new PolygonShape();</span>
+<span class="nc" id="L138">        shape.setAsBox(0.5f, 2.0f);</span>
+
+<span class="nc" id="L140">        BodyDef bd = new BodyDef();</span>
+<span class="nc" id="L141">        bd.type = BodyType.DYNAMIC;</span>
+<span class="nc" id="L142">        bd.position.set(0.0f, 7.0f);</span>
+<span class="nc" id="L143">        Body body = world.createBody(bd);</span>
+<span class="nc" id="L144">        body.createFixture(shape, 2.0f);</span>
+
+<span class="nc" id="L146">        RevoluteJointDef rjd = new RevoluteJointDef();</span>
+<span class="nc" id="L147">        rjd.initialize(prevBody, body, new Vec2(0.0f, 5.0f));</span>
+<span class="nc" id="L148">        rjd.motorSpeed = 1.0f * MathUtils.PI;</span>
+<span class="nc" id="L149">        rjd.maxMotorTorque = 20000;</span>
+<span class="nc" id="L150">        rjd.enableMotor = true;</span>
+<span class="nc" id="L151">        m_joint1 = (RevoluteJoint) world.createJoint(rjd);</span>
+
+<span class="nc" id="L153">        prevBody = body;</span>
+      }
+
+      // Define follower.
+      {
+<span class="nc" id="L158">        PolygonShape shape = new PolygonShape();</span>
+<span class="nc" id="L159">        shape.setAsBox(0.5f, 4.0f);</span>
+
+<span class="nc" id="L161">        BodyDef bd = new BodyDef();</span>
+<span class="nc" id="L162">        bd.type = BodyType.DYNAMIC;</span>
+<span class="nc" id="L163">        bd.position.set(0.0f, 13.0f);</span>
+<span class="nc" id="L164">        Body body = world.createBody(bd);</span>
+<span class="nc" id="L165">        body.createFixture(shape, 2.0f);</span>
+
+<span class="nc" id="L167">        RevoluteJointDef rjd = new RevoluteJointDef();</span>
+<span class="nc" id="L168">        rjd.initialize(prevBody, body, new Vec2(0.0f, 9.0f));</span>
+<span class="nc" id="L169">        rjd.enableMotor = false;</span>
+<span class="nc" id="L170">        world.createJoint(rjd);</span>
+
+<span class="nc" id="L172">        prevBody = body;</span>
+      }
+
+      // Define piston
+      {
+<span class="nc" id="L177">        PolygonShape shape = new PolygonShape();</span>
+<span class="nc" id="L178">        shape.setAsBox(7f, 2f);</span>
+
+<span class="nc" id="L180">        BodyDef bd = new BodyDef();</span>
+<span class="nc" id="L181">        bd.type = BodyType.DYNAMIC;</span>
+<span class="nc" id="L182">        bd.position.set(0.0f, 17.0f);</span>
+<span class="nc" id="L183">        Body body = world.createBody(bd);</span>
+<span class="nc" id="L184">        FixtureDef piston = new FixtureDef();</span>
+<span class="nc" id="L185">        piston.shape = shape;</span>
+<span class="nc" id="L186">        piston.density = 2;</span>
+<span class="nc" id="L187">        piston.filter.categoryBits = 1;</span>
+<span class="nc" id="L188">        piston.filter.maskBits = 2;</span>
+<span class="nc" id="L189">        body.createFixture(piston);</span>
+
+<span class="nc" id="L191">        RevoluteJointDef rjd = new RevoluteJointDef();</span>
+<span class="nc" id="L192">        rjd.initialize(prevBody, body, new Vec2(0.0f, 17.0f));</span>
+<span class="nc" id="L193">        world.createJoint(rjd);</span>
+
+<span class="nc" id="L195">        PrismaticJointDef pjd = new PrismaticJointDef();</span>
+<span class="nc" id="L196">        pjd.initialize(ground, body, new Vec2(0.0f, 17.0f), new Vec2(0.0f, 1.0f));</span>
+
+<span class="nc" id="L198">        pjd.maxMotorForce = 1000.0f;</span>
+<span class="nc" id="L199">        pjd.enableMotor = true;</span>
+
+<span class="nc" id="L201">        m_joint2 = (PrismaticJoint) world.createJoint(pjd);</span>
+      }
+
+      // Create a payload
+      {
+<span class="nc" id="L206">        PolygonShape sd = new PolygonShape();</span>
+<span class="nc" id="L207">        BodyDef bd = new BodyDef();</span>
+<span class="nc" id="L208">        bd.type = BodyType.DYNAMIC;</span>
+<span class="nc" id="L209">        FixtureDef fixture = new FixtureDef();</span>
+        Body body;
+<span class="nc bnc" id="L211" title="All 2 branches missed.">        for (int i = 0; i &lt; 100; ++i) {</span>
+<span class="nc" id="L212">          sd.setAsBox(0.4f, 0.3f);</span>
+<span class="nc" id="L213">          bd.position.set(-1.0f, 23.0f + i);</span>
+
+<span class="nc" id="L215">          bd.bullet = false;</span>
+<span class="nc" id="L216">          body = world.createBody(bd);</span>
+<span class="nc" id="L217">          fixture.shape = sd;</span>
+<span class="nc" id="L218">          fixture.density = .1f;</span>
+<span class="nc" id="L219">          fixture.filter.categoryBits = 2;</span>
+<span class="nc" id="L220">          fixture.filter.maskBits = 1 | 4 | 2;</span>
+<span class="nc" id="L221">          body.createFixture(fixture);</span>
+        }
+
+<span class="nc" id="L224">        CircleShape cd = new CircleShape();</span>
+<span class="nc" id="L225">        cd.m_radius = 0.36f;</span>
+<span class="nc bnc" id="L226" title="All 2 branches missed.">        for (int i = 0; i &lt; 100; ++i) {</span>
+<span class="nc" id="L227">          bd.position.set(1.0f, 23.0f + i);</span>
+<span class="nc" id="L228">          bd.bullet = false;</span>
+<span class="nc" id="L229">          fixture.shape = cd;</span>
+<span class="nc" id="L230">          fixture.density = 2f;</span>
+<span class="nc" id="L231">          fixture.filter.categoryBits = 2;</span>
+<span class="nc" id="L232">          fixture.filter.maskBits = 1 | 4 | 2;</span>
+<span class="nc" id="L233">          body = world.createBody(bd);</span>
+<span class="nc" id="L234">          body.createFixture(fixture);</span>
+        }
+
+<span class="nc" id="L237">        float angle = 0.0f;</span>
+<span class="nc" id="L238">        float delta = MathUtils.PI / 3.0f;</span>
+<span class="nc" id="L239">        Vec2 vertices[] = new Vec2[6];</span>
+<span class="nc bnc" id="L240" title="All 2 branches missed.">        for (int i = 0; i &lt; 6; ++i) {</span>
+<span class="nc" id="L241">          vertices[i] = new Vec2(0.3f * MathUtils.cos(angle), 0.3f * MathUtils.sin(angle));</span>
+<span class="nc" id="L242">          angle += delta;</span>
+        }
+
+<span class="nc" id="L245">        PolygonShape shape = new PolygonShape();</span>
+<span class="nc" id="L246">        shape.set(vertices, 6);</span>
+
+<span class="nc bnc" id="L248" title="All 2 branches missed.">        for (int i = 0; i &lt; 100; ++i) {</span>
+<span class="nc" id="L249">          bd.position.set(0f, 23.0f + i);</span>
+<span class="nc" id="L250">          bd.type = BodyType.DYNAMIC;</span>
+<span class="nc" id="L251">          bd.fixedRotation = true;</span>
+<span class="nc" id="L252">          bd.bullet = false;</span>
+<span class="nc" id="L253">          fixture.shape = shape;</span>
+<span class="nc" id="L254">          fixture.density = 1f;</span>
+<span class="nc" id="L255">          fixture.filter.categoryBits = 2;</span>
+<span class="nc" id="L256">          fixture.filter.maskBits = 1 | 4 | 2;</span>
+<span class="nc" id="L257">          body = world.createBody(bd);</span>
+<span class="nc" id="L258">          body.createFixture(fixture);</span>
+        }
+      }
+    }
+
+<span class="nc bnc" id="L263" title="All 2 branches missed.">    for (int i = 0; i &lt; frames; i++) {</span>
+<span class="nc" id="L264">      world.step(timeStep, posIters, velIters);</span>
+    }
+<span class="nc" id="L266">  }</span>
+
+  @Override
+  public int getFrames(int testNum) {
+<span class="nc" id="L270">    return frames;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

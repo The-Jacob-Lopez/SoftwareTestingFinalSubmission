@@ -1,0 +1,147 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+jbox2d-library,org.jbox2d.dynamics.contacts,Velocity,8,0,0,0,2,0,1,0,1,0
+jbox2d-library,org.jbox2d.dynamics.contacts,ContactSolver,3046,0,108,0,448,0,63,0,9,0
+jbox2d-library,org.jbox2d.dynamics.contacts,ContactPositionConstraint,43,0,2,0,9,0,2,0,1,0
+jbox2d-library,org.jbox2d.dynamics.contacts,ContactSolver.ContactSolverDef,3,0,0,0,1,0,1,0,1,0
+jbox2d-library,org.jbox2d.dynamics.contacts,PolygonContact,47,10,9,1,7,3,7,2,2,2
+jbox2d-library,org.jbox2d.dynamics.contacts,Position,8,0,0,0,2,0,1,0,1,0
+jbox2d-library,org.jbox2d.dynamics.contacts,PositionSolverManifold,461,0,10,0,53,0,9,0,3,0
+jbox2d-library,org.jbox2d.dynamics.contacts,EdgeAndPolygonContact,47,10,9,1,7,3,7,2,2,2
+jbox2d-library,org.jbox2d.dynamics.contacts,EdgeAndCircleContact,47,10,9,1,7,3,7,2,2,2
+jbox2d-library,org.jbox2d.dynamics.contacts,ContactEdge,0,15,0,0,0,5,0,1,0,1
+jbox2d-library,org.jbox2d.dynamics.contacts,PolygonAndCircleContact,47,10,9,1,7,3,7,2,2,2
+jbox2d-library,org.jbox2d.dynamics.contacts,ContactRegister,3,0,0,0,1,0,1,0,1,0
+jbox2d-library,org.jbox2d.dynamics.contacts,ContactVelocityConstraint.VelocityConstraintPoint,13,0,0,0,3,0,1,0,1,0
+jbox2d-library,org.jbox2d.dynamics.contacts,ContactVelocityConstraint,38,0,2,0,8,0,2,0,1,0
+jbox2d-library,org.jbox2d.dynamics.contacts,ChainAndPolygonContact,56,15,9,1,9,4,7,2,2,2
+jbox2d-library,org.jbox2d.dynamics.contacts,CircleContact,47,10,9,1,7,3,7,2,2,2
+jbox2d-library,org.jbox2d.dynamics.contacts,ChainAndCircleContact,56,15,9,1,9,4,7,2,2,2
+jbox2d-library,org.jbox2d.dynamics.contacts,Contact,423,38,42,0,102,11,44,1,23,1
+jbox2d-library,org.jbox2d.pooling.normal,DefaultWorldPool.new OrderedStack() {...},0,12,0,0,0,2,0,2,0,2
+jbox2d-library,org.jbox2d.pooling.normal,DefaultWorldPool.new OrderedStack() {...},0,12,0,0,0,2,0,2,0,2
+jbox2d-library,org.jbox2d.pooling.normal,DefaultWorldPool.new OrderedStack() {...},0,12,0,0,0,2,0,2,0,2
+jbox2d-library,org.jbox2d.pooling.normal,DefaultWorldPool.new OrderedStack() {...},0,12,0,0,0,2,0,2,0,2
+jbox2d-library,org.jbox2d.pooling.normal,CircleStack,129,0,12,0,23,0,11,0,5,0
+jbox2d-library,org.jbox2d.pooling.normal,DefaultWorldPool.new OrderedStack() {...},0,12,0,0,0,2,0,2,0,2
+jbox2d-library,org.jbox2d.pooling.normal,DefaultWorldPool.new MutableStack() {...},0,14,0,0,0,2,0,2,0,2
+jbox2d-library,org.jbox2d.pooling.normal,DefaultWorldPool.new MutableStack() {...},0,14,0,0,0,2,0,2,0,2
+jbox2d-library,org.jbox2d.pooling.normal,DefaultWorldPool.new MutableStack() {...},0,14,0,0,0,2,0,2,0,2
+jbox2d-library,org.jbox2d.pooling.normal,DefaultWorldPool.new OrderedStack() {...},0,12,0,0,0,2,0,2,0,2
+jbox2d-library,org.jbox2d.pooling.normal,DefaultWorldPool.new MutableStack() {...},0,14,0,0,0,2,0,2,0,2
+jbox2d-library,org.jbox2d.pooling.normal,DefaultWorldPool.new MutableStack() {...},0,14,0,0,0,2,0,2,0,2
+jbox2d-library,org.jbox2d.pooling.normal,DefaultWorldPool.new MutableStack() {...},0,14,0,0,0,2,0,2,0,2
+jbox2d-library,org.jbox2d.pooling.normal,DefaultWorldPool.new MutableStack() {...},0,14,0,0,0,2,0,2,0,2
+jbox2d-library,org.jbox2d.pooling.normal,OrderedStack,86,36,17,3,10,9,12,3,3,2
+jbox2d-library,org.jbox2d.pooling.normal,MutableStack,53,48,8,4,7,14,7,4,2,3
+jbox2d-library,org.jbox2d.pooling.normal,DefaultWorldPool,236,147,21,1,45,25,38,4,27,4
+jbox2d-library,org.jbox2d.profile,BasicPerformanceTest,199,0,12,0,33,0,13,0,7,0
+jbox2d-library,org.jbox2d.profile,SettingsPerformanceTest,88,0,23,0,28,0,19,0,4,0
+jbox2d-library,org.jbox2d.profile,PistonBenchmark,664,0,12,0,151,0,11,0,5,0
+jbox2d-library,org.jbox2d.pooling.stacks,DynamicIntStack,88,0,8,0,18,0,10,0,6,0
+jbox2d-library,org.jbox2d.callbacks,DebugDraw,181,0,6,0,46,0,20,0,17,0
+jbox2d-library,org.jbox2d.callbacks,ContactFilter,42,0,10,0,7,0,7,0,2,0
+jbox2d-library,org.jbox2d.callbacks,ContactImpulse,11,0,0,0,3,0,1,0,1,0
+jbox2d-library,org.jbox2d.collision,Distance.Simplex,389,602,64,24,77,110,43,16,0,10
+jbox2d-library,org.jbox2d.collision,Collision,250,2439,39,93,57,414,31,48,0,13
+jbox2d-library,org.jbox2d.collision,ContactID,34,59,1,1,11,13,4,5,3,5
+jbox2d-library,org.jbox2d.collision,ContactID.Type,0,15,0,0,0,2,0,1,0,1
+jbox2d-library,org.jbox2d.collision,ManifoldPoint,43,19,0,0,11,5,2,1,2,1
+jbox2d-library,org.jbox2d.collision,Collision.EPAxis,0,3,0,0,0,1,0,1,0,1
+jbox2d-library,org.jbox2d.collision,Collision.ReferenceFace,0,28,0,0,0,6,0,1,0,1
+jbox2d-library,org.jbox2d.collision,WorldManifold,402,0,14,0,58,0,10,0,2,0
+jbox2d-library,org.jbox2d.collision,Collision.PointState,0,27,0,0,0,5,0,1,0,1
+jbox2d-library,org.jbox2d.collision,Manifold.ManifoldType,0,21,0,0,0,2,0,1,0,1
+jbox2d-library,org.jbox2d.collision,TimeOfImpact.TOIOutput,3,0,0,0,1,0,1,0,1,0
+jbox2d-library,org.jbox2d.collision,Collision.EPCollider.VertexType,21,0,0,0,2,0,1,0,1,0
+jbox2d-library,org.jbox2d.collision,TimeOfImpact.TOIInput,23,0,0,0,5,0,1,0,1,0
+jbox2d-library,org.jbox2d.collision,RayCastOutput,11,11,0,0,3,4,1,1,1,1
+jbox2d-library,org.jbox2d.collision,TimeOfImpact.TOIOutputState,33,0,0,0,2,0,1,0,1,0
+jbox2d-library,org.jbox2d.collision,Collision.TempPolygon,0,34,0,2,0,7,0,2,0,1
+jbox2d-library,org.jbox2d.collision,RayCastInput,17,16,0,0,4,5,1,1,1,1
+jbox2d-library,org.jbox2d.collision,Distance.SimplexVertex,0,52,0,0,0,11,0,2,0,2
+jbox2d-library,org.jbox2d.collision,DistanceOutput,0,13,0,0,0,3,0,1,0,1
+jbox2d-library,org.jbox2d.collision,Collision.ClipVertex,0,50,0,0,0,13,0,2,0,2
+jbox2d-library,org.jbox2d.collision,TimeOfImpact,351,66,31,1,92,18,17,2,1,2
+jbox2d-library,org.jbox2d.collision,Distance,10,381,10,22,3,80,9,11,0,3
+jbox2d-library,org.jbox2d.collision,SeparationFunction,786,89,27,1,120,17,19,2,3,2
+jbox2d-library,org.jbox2d.collision,Type,21,0,0,0,2,0,1,0,1,0
+jbox2d-library,org.jbox2d.collision,Manifold,81,34,4,2,16,8,4,2,2,1
+jbox2d-library,org.jbox2d.collision,Distance.SimplexCache,29,47,0,0,5,12,1,1,1,1
+jbox2d-library,org.jbox2d.collision,Distance.DistanceProxy,156,143,21,14,27,32,16,10,2,5
+jbox2d-library,org.jbox2d.collision,Collision.EPAxis.Type,0,21,0,0,0,2,0,1,0,1
+jbox2d-library,org.jbox2d.collision,DistanceInput,0,23,0,0,0,5,0,1,0,1
+jbox2d-library,org.jbox2d.collision,Collision.EPCollider,1779,356,132,14,266,73,73,4,1,3
+jbox2d-library,org.jbox2d.collision,AABB,711,24,68,0,116,8,50,2,16,2
+jbox2d-library,org.jbox2d.collision.broadphase,BroadPhase,441,0,38,0,98,0,38,0,19,0
+jbox2d-library,org.jbox2d.collision.broadphase,Pair,33,0,8,0,6,0,6,0,2,0
+jbox2d-library,org.jbox2d.collision.broadphase,DynamicTree.TreeNodeStack,91,0,8,0,18,0,10,0,6,0
+jbox2d-library,org.jbox2d.collision.broadphase,DynamicTreeNode,25,0,2,0,6,0,5,0,4,0
+jbox2d-library,org.jbox2d.collision.broadphase,DynamicTree,2537,0,392,0,491,0,222,0,26,0
+jbox2d-library,org.jbox2d.collision.shapes,ChainShape,10,510,11,43,0,103,11,29,0,13
+jbox2d-library,org.jbox2d.collision.shapes,MassData,0,50,0,0,0,14,0,4,0,4
+jbox2d-library,org.jbox2d.collision.shapes,Shape,0,16,0,0,0,7,0,4,0,4
+jbox2d-library,org.jbox2d.collision.shapes,EdgeShape,2,523,1,21,1,90,1,18,0,8
+jbox2d-library,org.jbox2d.collision.shapes,ShapeType,0,27,0,0,0,2,0,1,0,1
+jbox2d-library,org.jbox2d.collision.shapes,PolygonShape,50,1528,25,113,6,256,25,64,0,20
+jbox2d-library,org.jbox2d.collision.shapes,CircleShape,2,411,3,13,0,60,3,17,0,12
+jbox2d-library,org.jbox2d.pooling.arrays,FloatArray,65,0,12,0,8,0,10,0,4,0
+jbox2d-library,org.jbox2d.pooling.arrays,IntArray,65,0,12,0,8,0,10,0,4,0
+jbox2d-library,org.jbox2d.pooling.arrays,Vec2Array,81,0,14,0,11,0,11,0,4,0
+jbox2d-library,org.jbox2d.common,Sweep,218,24,5,1,26,6,8,2,5,2
+jbox2d-library,org.jbox2d.common,OBBViewportTransform,271,0,8,0,61,0,22,0,18,0
+jbox2d-library,org.jbox2d.common,PlatformMathUtils,75,0,4,0,9,0,4,0,2,0
+jbox2d-library,org.jbox2d.common,Mat22,2139,19,75,1,270,5,91,2,53,2
+jbox2d-library,org.jbox2d.common,Color3f,83,0,0,0,21,0,5,0,5,0
+jbox2d-library,org.jbox2d.common,MathUtils,471,112,71,11,77,25,58,12,18,11
+jbox2d-library,org.jbox2d.common,OBBViewportTransform.OBB,18,0,0,0,4,0,1,0,1,0
+jbox2d-library,org.jbox2d.common,Vec3,430,50,21,1,61,15,29,5,18,5
+jbox2d-library,org.jbox2d.common,Vec2,375,254,33,13,50,54,42,24,23,20
+jbox2d-library,org.jbox2d.common,Transform,296,258,25,9,46,37,27,10,10,10
+jbox2d-library,org.jbox2d.common,Settings,16,23,2,0,3,10,4,1,3,1
+jbox2d-library,org.jbox2d.common,Timer,21,0,0,0,6,0,3,0,3,0
+jbox2d-library,org.jbox2d.common,Mat33,861,61,51,1,106,12,41,3,15,3
+jbox2d-library,org.jbox2d.common,RaycastResult,23,0,0,0,6,0,2,0,2,0
+jbox2d-library,org.jbox2d.common,Rot,197,145,9,1,28,30,16,10,11,10
+jbox2d-library,org.jbox2d.dynamics,Body,2054,0,214,0,428,0,175,0,68,0
+jbox2d-library,org.jbox2d.dynamics,BodyType,21,0,0,0,2,0,1,0,1,0
+jbox2d-library,org.jbox2d.dynamics,WorldQueryWrapper,15,0,0,0,3,0,2,0,2,0
+jbox2d-library,org.jbox2d.dynamics,ContactManager,507,0,86,0,133,0,48,0,5,0
+jbox2d-library,org.jbox2d.dynamics,Fixture,594,0,60,0,128,0,59,0,29,0
+jbox2d-library,org.jbox2d.dynamics,TimeStep,3,0,0,0,1,0,1,0,1,0
+jbox2d-library,org.jbox2d.dynamics,FixtureProxy,8,0,0,0,2,0,1,0,1,0
+jbox2d-library,org.jbox2d.dynamics,FixtureDef,29,0,0,0,10,0,1,0,1,0
+jbox2d-library,org.jbox2d.dynamics,World,3083,0,367,0,687,0,239,0,53,0
+jbox2d-library,org.jbox2d.dynamics,WorldRayCastWrapper,80,0,2,0,15,0,3,0,2,0
+jbox2d-library,org.jbox2d.dynamics,Filter,25,0,0,0,9,0,2,0,2,0
+jbox2d-library,org.jbox2d.dynamics,SolverData,3,0,0,0,1,0,1,0,1,0
+jbox2d-library,org.jbox2d.dynamics,Profile,56,0,0,0,11,0,2,0,2,0
+jbox2d-library,org.jbox2d.dynamics,Island,1401,0,120,0,232,0,70,0,10,0
+jbox2d-library,org.jbox2d.dynamics,BodyDef,49,0,0,0,16,0,1,0,1,0
+jbox2d-library,org.jbox2d.dynamics.joints,RevoluteJoint,1780,0,78,0,299,0,65,0,26,0
+jbox2d-library,org.jbox2d.dynamics.joints,MouseJoint,629,0,30,0,108,0,32,0,17,0
+jbox2d-library,org.jbox2d.dynamics.joints,RopeJointDef,28,0,0,0,7,0,1,0,1,0
+jbox2d-library,org.jbox2d.dynamics.joints,GearJointDef,12,0,0,0,5,0,1,0,1,0
+jbox2d-library,org.jbox2d.dynamics.joints,PrismaticJoint,2288,0,62,0,391,0,58,0,27,0
+jbox2d-library,org.jbox2d.dynamics.joints,ConstantVolumeJoint,934,0,60,0,117,0,45,0,15,0
+jbox2d-library,org.jbox2d.dynamics.joints,PulleyJointDef,109,0,6,0,25,0,6,0,3,0
+jbox2d-library,org.jbox2d.dynamics.joints,PrismaticJointDef,78,0,0,0,20,0,2,0,2,0
+jbox2d-library,org.jbox2d.dynamics.joints,DistanceJointDef,60,0,0,0,15,0,2,0,2,0
+jbox2d-library,org.jbox2d.dynamics.joints,PulleyJoint,1154,0,22,0,198,0,31,0,20,0
+jbox2d-library,org.jbox2d.dynamics.joints,FrictionJointDef,39,0,0,0,12,0,2,0,2,0
+jbox2d-library,org.jbox2d.dynamics.joints,ConstantVolumeJointDef,62,0,6,0,19,0,6,0,3,0
+jbox2d-library,org.jbox2d.dynamics.joints,WheelJointDef,59,0,0,0,16,0,2,0,2,0
+jbox2d-library,org.jbox2d.dynamics.joints,FrictionJoint,769,0,28,0,130,0,29,0,15,0
+jbox2d-library,org.jbox2d.dynamics.joints,Jacobian,8,0,0,0,2,0,1,0,1,0
+jbox2d-library,org.jbox2d.dynamics.joints,JointType,75,0,0,0,3,0,1,0,1,0
+jbox2d-library,org.jbox2d.dynamics.joints,GearJoint,1977,0,34,0,291,0,30,0,13,0
+jbox2d-library,org.jbox2d.dynamics.joints,LimitState,27,0,0,0,2,0,1,0,1,0
+jbox2d-library,org.jbox2d.dynamics.joints,RevoluteJointDef,69,0,0,0,18,0,2,0,2,0
+jbox2d-library,org.jbox2d.dynamics.joints,JointDef,18,0,0,0,7,0,1,0,1,0
+jbox2d-library,org.jbox2d.dynamics.joints,Joint,229,0,22,0,48,0,29,0,13,0
+jbox2d-library,org.jbox2d.dynamics.joints,MouseJointDef,26,0,0,0,8,0,1,0,1,0
+jbox2d-library,org.jbox2d.dynamics.joints,DistanceJoint,960,0,16,0,155,0,24,0,16,0
+jbox2d-library,org.jbox2d.dynamics.joints,WheelJoint,1461,0,20,0,242,0,34,0,24,0
+jbox2d-library,org.jbox2d.dynamics.joints,RopeJoint,906,0,12,0,148,0,19,0,13,0
+jbox2d-library,org.jbox2d.dynamics.joints,JointEdge,15,0,0,0,5,0,1,0,1,0
+jbox2d-library,org.jbox2d.dynamics.joints,WeldJointDef,47,0,0,0,12,0,2,0,2,0
+jbox2d-library,org.jbox2d.dynamics.joints,WeldJoint,1414,0,18,0,215,0,24,0,15,0

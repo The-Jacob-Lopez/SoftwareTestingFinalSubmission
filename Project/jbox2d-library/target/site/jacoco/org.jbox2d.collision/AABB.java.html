@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AABB.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">jbox2d-library</a> &gt; <a href="index.source.html" class="el_package">org.jbox2d.collision</a> &gt; <span class="el_source">AABB.java</span></div><h1>AABB.java</h1><pre class="source lang-java linenums">/*******************************************************************************
+ * Copyright (c) 2013, Daniel Murphy
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ * 	* Redistributions of source code must retain the above copyright notice,
+ * 	  this list of conditions and the following disclaimer.
+ * 	* Redistributions in binary form must reproduce the above copyright notice,
+ * 	  this list of conditions and the following disclaimer in the documentation
+ * 	  and/or other materials provided with the distribution.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot; AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ ******************************************************************************/
+package org.jbox2d.collision;
+
+import org.jbox2d.common.MathUtils;
+import org.jbox2d.common.Settings;
+import org.jbox2d.common.Vec2;
+import org.jbox2d.pooling.IWorldPool;
+import org.jbox2d.pooling.normal.DefaultWorldPool;
+
+/** An axis-aligned bounding box. */
+public class AABB {
+  /** Bottom left vertex of bounding box. */
+  public final Vec2 lowerBound;
+  /** Top right vertex of bounding box. */
+  public final Vec2 upperBound;
+
+  /**
+   * Creates the default object, with vertices at 0,0 and 0,0.
+   */
+<span class="fc" id="L42">  public AABB() {</span>
+<span class="fc" id="L43">    lowerBound = new Vec2();</span>
+<span class="fc" id="L44">    upperBound = new Vec2();</span>
+<span class="fc" id="L45">  }</span>
+
+  /**
+   * Copies from the given object
+   * 
+   * @param copy the object to copy from
+   */
+  public AABB(final AABB copy) {
+<span class="nc" id="L53">    this(copy.lowerBound, copy.upperBound);</span>
+<span class="nc" id="L54">  }</span>
+
+  /**
+   * Creates an AABB object using the given bounding vertices.
+   * 
+   * @param lowerVertex the bottom left vertex of the bounding box
+   * @param maxVertex the top right vertex of the bounding box
+   */
+<span class="fc" id="L62">  public AABB(final Vec2 lowerVertex, final Vec2 upperVertex) {</span>
+<span class="fc" id="L63">    this.lowerBound = lowerVertex.clone(); // clone to be safe</span>
+<span class="fc" id="L64">    this.upperBound = upperVertex.clone();</span>
+<span class="fc" id="L65">  }</span>
+
+  /**
+   * Sets this object from the given object
+   * 
+   * @param aabb the object to copy from
+   */
+  public final void set(final AABB aabb) {
+<span class="nc" id="L73">    Vec2 v = aabb.lowerBound;</span>
+<span class="nc" id="L74">    lowerBound.x = v.x;</span>
+<span class="nc" id="L75">    lowerBound.y = v.y;</span>
+<span class="nc" id="L76">    Vec2 v1 = aabb.upperBound;</span>
+<span class="nc" id="L77">    upperBound.x = v1.x;</span>
+<span class="nc" id="L78">    upperBound.y = v1.y;</span>
+<span class="nc" id="L79">  }</span>
+
+  /** Verify that the bounds are sorted */
+  public final boolean isValid() {
+<span class="nc" id="L83">    final float dx = upperBound.x - lowerBound.x;</span>
+<span class="nc bnc" id="L84" title="All 2 branches missed.">    if (dx &lt; 0f) {</span>
+<span class="nc" id="L85">      return false;</span>
+    }
+<span class="nc" id="L87">    final float dy = upperBound.y - lowerBound.y;</span>
+<span class="nc bnc" id="L88" title="All 2 branches missed.">    if (dy &lt; 0) {</span>
+<span class="nc" id="L89">      return false;</span>
+    }
+<span class="nc bnc" id="L91" title="All 4 branches missed.">    return lowerBound.isValid() &amp;&amp; upperBound.isValid();</span>
+  }
+
+  /**
+   * Get the center of the AABB
+   * 
+   * @return
+   */
+  public final Vec2 getCenter() {
+<span class="nc" id="L100">    final Vec2 center = new Vec2(lowerBound);</span>
+<span class="nc" id="L101">    center.addLocal(upperBound);</span>
+<span class="nc" id="L102">    center.mulLocal(.5f);</span>
+<span class="nc" id="L103">    return center;</span>
+  }
+
+  public final void getCenterToOut(final Vec2 out) {
+<span class="nc" id="L107">    out.x = (lowerBound.x + upperBound.x) * .5f;</span>
+<span class="nc" id="L108">    out.y = (lowerBound.y + upperBound.y) * .5f;</span>
+<span class="nc" id="L109">  }</span>
+
+  /**
+   * Get the extents of the AABB (half-widths).
+   * 
+   * @return
+   */
+  public final Vec2 getExtents() {
+<span class="nc" id="L117">    final Vec2 center = new Vec2(upperBound);</span>
+<span class="nc" id="L118">    center.subLocal(lowerBound);</span>
+<span class="nc" id="L119">    center.mulLocal(.5f);</span>
+<span class="nc" id="L120">    return center;</span>
+  }
+
+  public final void getExtentsToOut(final Vec2 out) {
+<span class="nc" id="L124">    out.x = (upperBound.x - lowerBound.x) * .5f;</span>
+<span class="nc" id="L125">    out.y = (upperBound.y - lowerBound.y) * .5f; // thanks FDN1</span>
+<span class="nc" id="L126">  }</span>
+
+  public final void getVertices(Vec2[] argRay) {
+<span class="nc" id="L129">    argRay[0].set(lowerBound);</span>
+<span class="nc" id="L130">    argRay[1].set(lowerBound);</span>
+<span class="nc" id="L131">    argRay[1].x += upperBound.x - lowerBound.x;</span>
+<span class="nc" id="L132">    argRay[2].set(upperBound);</span>
+<span class="nc" id="L133">    argRay[3].set(upperBound);</span>
+<span class="nc" id="L134">    argRay[3].x -= upperBound.x - lowerBound.x;</span>
+<span class="nc" id="L135">  }</span>
+
+  /**
+   * Combine two AABBs into this one.
+   * 
+   * @param aabb1
+   * @param aab
+   */
+  public final void combine(final AABB aabb1, final AABB aab) {
+<span class="nc bnc" id="L144" title="All 2 branches missed.">    lowerBound.x = aabb1.lowerBound.x &lt; aab.lowerBound.x ? aabb1.lowerBound.x : aab.lowerBound.x;</span>
+<span class="nc bnc" id="L145" title="All 2 branches missed.">    lowerBound.y = aabb1.lowerBound.y &lt; aab.lowerBound.y ? aabb1.lowerBound.y : aab.lowerBound.y;</span>
+<span class="nc bnc" id="L146" title="All 2 branches missed.">    upperBound.x = aabb1.upperBound.x &gt; aab.upperBound.x ? aabb1.upperBound.x : aab.upperBound.x;</span>
+<span class="nc bnc" id="L147" title="All 2 branches missed.">    upperBound.y = aabb1.upperBound.y &gt; aab.upperBound.y ? aabb1.upperBound.y : aab.upperBound.y;</span>
+<span class="nc" id="L148">  }</span>
+
+  /**
+   * Gets the perimeter length
+   * 
+   * @return
+   */
+  public final float getPerimeter() {
+<span class="nc" id="L156">    return 2.0f * (upperBound.x - lowerBound.x + upperBound.y - lowerBound.y);</span>
+  }
+
+  /**
+   * Combines another aabb with this one
+   * 
+   * @param aabb
+   */
+  public final void combine(final AABB aabb) {
+<span class="nc bnc" id="L165" title="All 2 branches missed.">    lowerBound.x = lowerBound.x &lt; aabb.lowerBound.x ? lowerBound.x : aabb.lowerBound.x;</span>
+<span class="nc bnc" id="L166" title="All 2 branches missed.">    lowerBound.y = lowerBound.y &lt; aabb.lowerBound.y ? lowerBound.y : aabb.lowerBound.y;</span>
+<span class="nc bnc" id="L167" title="All 2 branches missed.">    upperBound.x = upperBound.x &gt; aabb.upperBound.x ? upperBound.x : aabb.upperBound.x;</span>
+<span class="nc bnc" id="L168" title="All 2 branches missed.">    upperBound.y = upperBound.y &gt; aabb.upperBound.y ? upperBound.y : aabb.upperBound.y;</span>
+<span class="nc" id="L169">  }</span>
+
+  /**
+   * Does this aabb contain the provided AABB.
+   * 
+   * @return
+   */
+  public final boolean contains(final AABB aabb) {
+    /*
+     * boolean result = true; result = result &amp;&amp; lowerBound.x &lt;= aabb.lowerBound.x; result = result
+     * &amp;&amp; lowerBound.y &lt;= aabb.lowerBound.y; result = result &amp;&amp; aabb.upperBound.x &lt;= upperBound.x;
+     * result = result &amp;&amp; aabb.upperBound.y &lt;= upperBound.y; return result;
+     */
+    // djm: faster putting all of them together, as if one is false we leave the logic
+    // early
+<span class="nc bnc" id="L184" title="All 8 branches missed.">    return lowerBound.x &gt; aabb.lowerBound.x &amp;&amp; lowerBound.y &gt; aabb.lowerBound.y</span>
+        &amp;&amp; aabb.upperBound.x &gt; upperBound.x &amp;&amp; aabb.upperBound.y &gt; upperBound.y;
+  }
+
+  /**
+   * @deprecated please use {@link #raycast(RayCastOutput, RayCastInput, IWorldPool)} for better
+   *             performance
+   * @param output
+   * @param input
+   * @return
+   */
+  public final boolean raycast(final RayCastOutput output, final RayCastInput input) {
+<span class="nc" id="L196">    return raycast(output, input, new DefaultWorldPool(4, 4));</span>
+  }
+
+  /**
+   * From Real-time Collision Detection, p179.
+   * 
+   * @param output
+   * @param input
+   */
+  public final boolean raycast(final RayCastOutput output, final RayCastInput input,
+      IWorldPool argPool) {
+<span class="nc" id="L207">    float tmin = -Float.MAX_VALUE;</span>
+<span class="nc" id="L208">    float tmax = Float.MAX_VALUE;</span>
+
+<span class="nc" id="L210">    final Vec2 p = argPool.popVec2();</span>
+<span class="nc" id="L211">    final Vec2 d = argPool.popVec2();</span>
+<span class="nc" id="L212">    final Vec2 absD = argPool.popVec2();</span>
+<span class="nc" id="L213">    final Vec2 normal = argPool.popVec2();</span>
+
+<span class="nc" id="L215">    p.set(input.p1);</span>
+<span class="nc" id="L216">    d.set(input.p2).subLocal(input.p1);</span>
+<span class="nc" id="L217">    Vec2.absToOut(d, absD);</span>
+
+    // x then y
+<span class="nc bnc" id="L220" title="All 2 branches missed.">    if (absD.x &lt; Settings.EPSILON) {</span>
+      // Parallel.
+<span class="nc bnc" id="L222" title="All 4 branches missed.">      if (p.x &lt; lowerBound.x || upperBound.x &lt; p.x) {</span>
+<span class="nc" id="L223">        argPool.pushVec2(4);</span>
+<span class="nc" id="L224">        return false;</span>
+      }
+    } else {
+<span class="nc" id="L227">      final float inv_d = 1.0f / d.x;</span>
+<span class="nc" id="L228">      float t1 = (lowerBound.x - p.x) * inv_d;</span>
+<span class="nc" id="L229">      float t2 = (upperBound.x - p.x) * inv_d;</span>
+
+      // Sign of the normal vector.
+<span class="nc" id="L232">      float s = -1.0f;</span>
+
+<span class="nc bnc" id="L234" title="All 2 branches missed.">      if (t1 &gt; t2) {</span>
+<span class="nc" id="L235">        final float temp = t1;</span>
+<span class="nc" id="L236">        t1 = t2;</span>
+<span class="nc" id="L237">        t2 = temp;</span>
+<span class="nc" id="L238">        s = 1.0f;</span>
+      }
+
+      // Push the min up
+<span class="nc bnc" id="L242" title="All 2 branches missed.">      if (t1 &gt; tmin) {</span>
+<span class="nc" id="L243">        normal.setZero();</span>
+<span class="nc" id="L244">        normal.x = s;</span>
+<span class="nc" id="L245">        tmin = t1;</span>
+      }
+
+      // Pull the max down
+<span class="nc" id="L249">      tmax = MathUtils.min(tmax, t2);</span>
+
+<span class="nc bnc" id="L251" title="All 2 branches missed.">      if (tmin &gt; tmax) {</span>
+<span class="nc" id="L252">        argPool.pushVec2(4);</span>
+<span class="nc" id="L253">        return false;</span>
+      }
+    }
+
+<span class="nc bnc" id="L257" title="All 2 branches missed.">    if (absD.y &lt; Settings.EPSILON) {</span>
+      // Parallel.
+<span class="nc bnc" id="L259" title="All 4 branches missed.">      if (p.y &lt; lowerBound.y || upperBound.y &lt; p.y) {</span>
+<span class="nc" id="L260">        argPool.pushVec2(4);</span>
+<span class="nc" id="L261">        return false;</span>
+      }
+    } else {
+<span class="nc" id="L264">      final float inv_d = 1.0f / d.y;</span>
+<span class="nc" id="L265">      float t1 = (lowerBound.y - p.y) * inv_d;</span>
+<span class="nc" id="L266">      float t2 = (upperBound.y - p.y) * inv_d;</span>
+
+      // Sign of the normal vector.
+<span class="nc" id="L269">      float s = -1.0f;</span>
+
+<span class="nc bnc" id="L271" title="All 2 branches missed.">      if (t1 &gt; t2) {</span>
+<span class="nc" id="L272">        final float temp = t1;</span>
+<span class="nc" id="L273">        t1 = t2;</span>
+<span class="nc" id="L274">        t2 = temp;</span>
+<span class="nc" id="L275">        s = 1.0f;</span>
+      }
+
+      // Push the min up
+<span class="nc bnc" id="L279" title="All 2 branches missed.">      if (t1 &gt; tmin) {</span>
+<span class="nc" id="L280">        normal.setZero();</span>
+<span class="nc" id="L281">        normal.y = s;</span>
+<span class="nc" id="L282">        tmin = t1;</span>
+      }
+
+      // Pull the max down
+<span class="nc" id="L286">      tmax = MathUtils.min(tmax, t2);</span>
+
+<span class="nc bnc" id="L288" title="All 2 branches missed.">      if (tmin &gt; tmax) {</span>
+<span class="nc" id="L289">        argPool.pushVec2(4);</span>
+<span class="nc" id="L290">        return false;</span>
+      }
+    }
+
+    // Does the ray start inside the box?
+    // Does the ray intersect beyond the max fraction?
+<span class="nc bnc" id="L296" title="All 4 branches missed.">    if (tmin &lt; 0.0f || input.maxFraction &lt; tmin) {</span>
+<span class="nc" id="L297">      argPool.pushVec2(4);</span>
+<span class="nc" id="L298">      return false;</span>
+    }
+
+    // Intersection.
+<span class="nc" id="L302">    output.fraction = tmin;</span>
+<span class="nc" id="L303">    output.normal.x = normal.x;</span>
+<span class="nc" id="L304">    output.normal.y = normal.y;</span>
+<span class="nc" id="L305">    argPool.pushVec2(4);</span>
+<span class="nc" id="L306">    return true;</span>
+  }
+
+  public static final boolean testOverlap(final AABB a, final AABB b) {
+<span class="nc bnc" id="L310" title="All 4 branches missed.">    if (b.lowerBound.x - a.upperBound.x &gt; 0.0f || b.lowerBound.y - a.upperBound.y &gt; 0.0f) {</span>
+<span class="nc" id="L311">      return false;</span>
+    }
+
+<span class="nc bnc" id="L314" title="All 4 branches missed.">    if (a.lowerBound.x - b.upperBound.x &gt; 0.0f || a.lowerBound.y - b.upperBound.y &gt; 0.0f) {</span>
+<span class="nc" id="L315">      return false;</span>
+    }
+
+<span class="nc" id="L318">    return true;</span>
+  }
+
+  @Override
+  public final String toString() {
+<span class="nc" id="L323">    final String s = &quot;AABB[&quot; + lowerBound + &quot; . &quot; + upperBound + &quot;]&quot;;</span>
+<span class="nc" id="L324">    return s;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

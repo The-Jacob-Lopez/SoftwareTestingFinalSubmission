@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Vec2.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">jbox2d-library</a> &gt; <a href="index.source.html" class="el_package">org.jbox2d.common</a> &gt; <span class="el_source">Vec2.java</span></div><h1>Vec2.java</h1><pre class="source lang-java linenums">/*******************************************************************************
+ * Copyright (c) 2013, Daniel Murphy
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ * 	* Redistributions of source code must retain the above copyright notice,
+ * 	  this list of conditions and the following disclaimer.
+ * 	* Redistributions in binary form must reproduce the above copyright notice,
+ * 	  this list of conditions and the following disclaimer in the documentation
+ * 	  and/or other materials provided with the distribution.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot; AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ ******************************************************************************/
+package org.jbox2d.common;
+
+import java.io.Serializable;
+
+/**
+ * A 2D column vector
+ */
+<span class="pc bpc" id="L31" title="1 of 2 branches missed.">public class Vec2 implements Serializable {</span>
+  private static final long serialVersionUID = 1L;
+
+  public float x, y;
+
+  public Vec2() {
+<span class="fc" id="L37">    this(0, 0);</span>
+<span class="fc" id="L38">  }</span>
+
+<span class="fc" id="L40">  public Vec2(float x, float y) {</span>
+<span class="fc" id="L41">    this.x = x;</span>
+<span class="fc" id="L42">    this.y = y;</span>
+<span class="fc" id="L43">  }</span>
+
+  public Vec2(Vec2 toCopy) {
+<span class="fc" id="L46">    this(toCopy.x, toCopy.y);</span>
+<span class="fc" id="L47">  }</span>
+
+  /** Zero out this vector. */
+  public final void setZero() {
+<span class="fc" id="L51">    x = 0.0f;</span>
+<span class="fc" id="L52">    y = 0.0f;</span>
+<span class="fc" id="L53">  }</span>
+
+  /** Set the vector component-wise. */
+  public final Vec2 set(float x, float y) {
+<span class="fc" id="L57">    this.x = x;</span>
+<span class="fc" id="L58">    this.y = y;</span>
+<span class="fc" id="L59">    return this;</span>
+  }
+
+  /** Set this vector to another vector. */
+  public final Vec2 set(Vec2 v) {
+<span class="fc" id="L64">    this.x = v.x;</span>
+<span class="fc" id="L65">    this.y = v.y;</span>
+<span class="fc" id="L66">    return this;</span>
+  }
+
+  /** Return the sum of this vector and another; does not alter either one. */
+  public final Vec2 add(Vec2 v) {
+<span class="nc" id="L71">    return new Vec2(x + v.x, y + v.y);</span>
+  }
+
+
+
+  /** Return the difference of this vector and another; does not alter either one. */
+  public final Vec2 sub(Vec2 v) {
+<span class="nc" id="L78">    return new Vec2(x - v.x, y - v.y);</span>
+  }
+
+  /** Return this vector multiplied by a scalar; does not alter this vector. */
+  public final Vec2 mul(float a) {
+<span class="nc" id="L83">    return new Vec2(x * a, y * a);</span>
+  }
+
+  /** Return the negation of this vector; does not alter this vector. */
+  public final Vec2 negate() {
+<span class="nc" id="L88">    return new Vec2(-x, -y);</span>
+  }
+
+  /** Flip the vector and return it - alters this vector. */
+  public final Vec2 negateLocal() {
+<span class="fc" id="L93">    x = -x;</span>
+<span class="fc" id="L94">    y = -y;</span>
+<span class="fc" id="L95">    return this;</span>
+  }
+
+  /** Add another vector to this one and returns result - alters this vector. */
+  public final Vec2 addLocal(Vec2 v) {
+<span class="fc" id="L100">    x += v.x;</span>
+<span class="fc" id="L101">    y += v.y;</span>
+<span class="fc" id="L102">    return this;</span>
+  }
+
+  /** Adds values to this vector and returns result - alters this vector. */
+  public final Vec2 addLocal(float x, float y) {
+<span class="nc" id="L107">    this.x += x;</span>
+<span class="nc" id="L108">    this.y += y;</span>
+<span class="nc" id="L109">    return this;</span>
+  }
+
+  /** Subtract another vector from this one and return result - alters this vector. */
+  public final Vec2 subLocal(Vec2 v) {
+<span class="fc" id="L114">    x -= v.x;</span>
+<span class="fc" id="L115">    y -= v.y;</span>
+<span class="fc" id="L116">    return this;</span>
+  }
+
+  /** Multiply this vector by a number and return result - alters this vector. */
+  public final Vec2 mulLocal(float a) {
+<span class="fc" id="L121">    x *= a;</span>
+<span class="fc" id="L122">    y *= a;</span>
+<span class="fc" id="L123">    return this;</span>
+  }
+
+  /** Get the skew vector such that dot(skew_vec, other) == cross(vec, other) */
+  public final Vec2 skew() {
+<span class="nc" id="L128">    return new Vec2(-y, x);</span>
+  }
+
+  /** Get the skew vector such that dot(skew_vec, other) == cross(vec, other) */
+  public final void skew(Vec2 out) {
+<span class="nc" id="L133">    out.x = -y;</span>
+<span class="nc" id="L134">    out.y = x;</span>
+<span class="nc" id="L135">  }</span>
+
+  /** Return the length of this vector. */
+  public final float length() {
+<span class="fc" id="L139">    return MathUtils.sqrt(x * x + y * y);</span>
+  }
+
+  /** Return the squared length of this vector. */
+  public final float lengthSquared() {
+<span class="fc" id="L144">    return (x * x + y * y);</span>
+  }
+
+  /** Normalize this vector and return the length before normalization. Alters this vector. */
+  public final float normalize() {
+<span class="fc" id="L149">    float length = length();</span>
+<span class="fc bfc" id="L150" title="All 2 branches covered.">    if (length &lt; Settings.EPSILON) {</span>
+<span class="fc" id="L151">      return 0f;</span>
+    }
+
+<span class="fc" id="L154">    float invLength = 1.0f / length;</span>
+<span class="fc" id="L155">    x *= invLength;</span>
+<span class="fc" id="L156">    y *= invLength;</span>
+<span class="fc" id="L157">    return length;</span>
+  }
+
+  /** True if the vector represents a pair of valid, non-infinite floating point numbers. */
+  public final boolean isValid() {
+<span class="nc bnc" id="L162" title="All 8 branches missed.">    return !Float.isNaN(x) &amp;&amp; !Float.isInfinite(x) &amp;&amp; !Float.isNaN(y) &amp;&amp; !Float.isInfinite(y);</span>
+  }
+
+  /** Return a new vector that has positive components. */
+  public final Vec2 abs() {
+<span class="nc" id="L167">    return new Vec2(MathUtils.abs(x), MathUtils.abs(y));</span>
+  }
+
+  public final void absLocal() {
+<span class="nc" id="L171">    x = MathUtils.abs(x);</span>
+<span class="nc" id="L172">    y = MathUtils.abs(y);</span>
+<span class="nc" id="L173">  }</span>
+
+  // @Override // annotation omitted for GWT-compatibility
+  /** Return a copy of this vector. */
+  public final Vec2 clone() {
+<span class="fc" id="L178">    return new Vec2(x, y);</span>
+  }
+
+  @Override
+  public final String toString() {
+<span class="fc" id="L183">    return &quot;(&quot; + x + &quot;,&quot; + y + &quot;)&quot;;</span>
+  }
+
+  /*
+   * Static
+   */
+
+  public final static Vec2 abs(Vec2 a) {
+<span class="nc" id="L191">    return new Vec2(MathUtils.abs(a.x), MathUtils.abs(a.y));</span>
+  }
+
+  public final static void absToOut(Vec2 a, Vec2 out) {
+<span class="nc" id="L195">    out.x = MathUtils.abs(a.x);</span>
+<span class="nc" id="L196">    out.y = MathUtils.abs(a.y);</span>
+<span class="nc" id="L197">  }</span>
+
+  public final static float dot(Vec2 a, Vec2 b) {
+<span class="fc" id="L200">    return a.x * b.x + a.y * b.y;</span>
+  }
+
+  public final static float cross(Vec2 a, Vec2 b) {
+<span class="fc" id="L204">    return a.x * b.y - a.y * b.x;</span>
+  }
+
+  public final static Vec2 cross(Vec2 a, float s) {
+<span class="nc" id="L208">    return new Vec2(s * a.y, -s * a.x);</span>
+  }
+
+  public final static void crossToOut(Vec2 a, float s, Vec2 out) {
+<span class="nc" id="L212">    final float tempy = -s * a.x;</span>
+<span class="nc" id="L213">    out.x = s * a.y;</span>
+<span class="nc" id="L214">    out.y = tempy;</span>
+<span class="nc" id="L215">  }</span>
+
+  public final static void crossToOutUnsafe(Vec2 a, float s, Vec2 out) {
+<span class="pc bpc" id="L218" title="2 of 4 branches missed.">    assert (out != a);</span>
+<span class="fc" id="L219">    out.x = s * a.y;</span>
+<span class="fc" id="L220">    out.y = -s * a.x;</span>
+<span class="fc" id="L221">  }</span>
+
+  public final static Vec2 cross(float s, Vec2 a) {
+<span class="nc" id="L224">    return new Vec2(-s * a.y, s * a.x);</span>
+  }
+
+  public final static void crossToOut(float s, Vec2 a, Vec2 out) {
+<span class="nc" id="L228">    final float tempY = s * a.x;</span>
+<span class="nc" id="L229">    out.x = -s * a.y;</span>
+<span class="nc" id="L230">    out.y = tempY;</span>
+<span class="nc" id="L231">  }</span>
+
+  public final static void crossToOutUnsafe(float s, Vec2 a, Vec2 out) {
+<span class="nc bnc" id="L234" title="All 4 branches missed.">    assert (out != a);</span>
+<span class="nc" id="L235">    out.x = -s * a.y;</span>
+<span class="nc" id="L236">    out.y = s * a.x;</span>
+<span class="nc" id="L237">  }</span>
+
+  public final static void negateToOut(Vec2 a, Vec2 out) {
+<span class="nc" id="L240">    out.x = -a.x;</span>
+<span class="nc" id="L241">    out.y = -a.y;</span>
+<span class="nc" id="L242">  }</span>
+
+  public final static Vec2 min(Vec2 a, Vec2 b) {
+<span class="nc bnc" id="L245" title="All 4 branches missed.">    return new Vec2(a.x &lt; b.x ? a.x : b.x, a.y &lt; b.y ? a.y : b.y);</span>
+  }
+
+  public final static Vec2 max(Vec2 a, Vec2 b) {
+<span class="nc bnc" id="L249" title="All 4 branches missed.">    return new Vec2(a.x &gt; b.x ? a.x : b.x, a.y &gt; b.y ? a.y : b.y);</span>
+  }
+
+  public final static void minToOut(Vec2 a, Vec2 b, Vec2 out) {
+<span class="nc bnc" id="L253" title="All 2 branches missed.">    out.x = a.x &lt; b.x ? a.x : b.x;</span>
+<span class="nc bnc" id="L254" title="All 2 branches missed.">    out.y = a.y &lt; b.y ? a.y : b.y;</span>
+<span class="nc" id="L255">  }</span>
+
+  public final static void maxToOut(Vec2 a, Vec2 b, Vec2 out) {
+<span class="nc bnc" id="L258" title="All 2 branches missed.">    out.x = a.x &gt; b.x ? a.x : b.x;</span>
+<span class="nc bnc" id="L259" title="All 2 branches missed.">    out.y = a.y &gt; b.y ? a.y : b.y;</span>
+<span class="nc" id="L260">  }</span>
+
+  /**
+   * @see java.lang.Object#hashCode()
+   */
+  @Override
+  public int hashCode() { // automatically generated by Eclipse
+<span class="nc" id="L267">    final int prime = 31;</span>
+<span class="nc" id="L268">    int result = 1;</span>
+<span class="nc" id="L269">    result = prime * result + Float.floatToIntBits(x);</span>
+<span class="nc" id="L270">    result = prime * result + Float.floatToIntBits(y);</span>
+<span class="nc" id="L271">    return result;</span>
+  }
+
+  /**
+   * @see java.lang.Object#equals(java.lang.Object)
+   */
+  @Override
+  public boolean equals(Object obj) { // automatically generated by Eclipse
+<span class="fc bfc" id="L279" title="All 2 branches covered.">    if (this == obj) return true;</span>
+<span class="pc bpc" id="L280" title="1 of 2 branches missed.">    if (obj == null) return false;</span>
+<span class="pc bpc" id="L281" title="1 of 2 branches missed.">    if (getClass() != obj.getClass()) return false;</span>
+<span class="fc" id="L282">    Vec2 other = (Vec2) obj;</span>
+<span class="fc bfc" id="L283" title="All 2 branches covered.">    if (Float.floatToIntBits(x) != Float.floatToIntBits(other.x)) return false;</span>
+<span class="fc bfc" id="L284" title="All 2 branches covered.">    if (Float.floatToIntBits(y) != Float.floatToIntBits(other.y)) return false;</span>
+<span class="fc" id="L285">    return true;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ContactManager.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">jbox2d-library</a> &gt; <a href="index.source.html" class="el_package">org.jbox2d.dynamics</a> &gt; <span class="el_source">ContactManager.java</span></div><h1>ContactManager.java</h1><pre class="source lang-java linenums">/*******************************************************************************
+ * Copyright (c) 2013, Daniel Murphy
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ * 	* Redistributions of source code must retain the above copyright notice,
+ * 	  this list of conditions and the following disclaimer.
+ * 	* Redistributions in binary form must reproduce the above copyright notice,
+ * 	  this list of conditions and the following disclaimer in the documentation
+ * 	  and/or other materials provided with the distribution.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot; AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ ******************************************************************************/
+package org.jbox2d.dynamics;
+
+import org.jbox2d.callbacks.ContactFilter;
+import org.jbox2d.callbacks.ContactListener;
+import org.jbox2d.callbacks.PairCallback;
+import org.jbox2d.collision.broadphase.BroadPhase;
+import org.jbox2d.collision.broadphase.BroadPhaseStrategy;
+import org.jbox2d.dynamics.contacts.Contact;
+import org.jbox2d.dynamics.contacts.ContactEdge;
+
+/**
+ * Delegate of World.
+ * 
+ * @author Daniel Murphy
+ */
+public class ContactManager implements PairCallback {
+
+  public BroadPhase m_broadPhase;
+  public Contact m_contactList;
+  public int m_contactCount;
+  public ContactFilter m_contactFilter;
+  public ContactListener m_contactListener;
+
+  private final World pool;
+
+<span class="nc" id="L49">  public ContactManager(World argPool, BroadPhaseStrategy strategy) {</span>
+<span class="nc" id="L50">    m_contactList = null;</span>
+<span class="nc" id="L51">    m_contactCount = 0;</span>
+<span class="nc" id="L52">    m_contactFilter = new ContactFilter();</span>
+<span class="nc" id="L53">    m_contactListener = null;</span>
+<span class="nc" id="L54">    m_broadPhase = new BroadPhase(strategy);</span>
+<span class="nc" id="L55">    pool = argPool;</span>
+<span class="nc" id="L56">  }</span>
+
+  /**
+   * Broad-phase callback.
+   * 
+   * @param proxyUserDataA
+   * @param proxyUserDataB
+   */
+  public void addPair(Object proxyUserDataA, Object proxyUserDataB) {
+<span class="nc" id="L65">    FixtureProxy proxyA = (FixtureProxy) proxyUserDataA;</span>
+<span class="nc" id="L66">    FixtureProxy proxyB = (FixtureProxy) proxyUserDataB;</span>
+
+<span class="nc" id="L68">    Fixture fixtureA = proxyA.fixture;</span>
+<span class="nc" id="L69">    Fixture fixtureB = proxyB.fixture;</span>
+
+<span class="nc" id="L71">    int indexA = proxyA.childIndex;</span>
+<span class="nc" id="L72">    int indexB = proxyB.childIndex;</span>
+
+<span class="nc" id="L74">    Body bodyA = fixtureA.getBody();</span>
+<span class="nc" id="L75">    Body bodyB = fixtureB.getBody();</span>
+
+    // Are the fixtures on the same body?
+<span class="nc bnc" id="L78" title="All 2 branches missed.">    if (bodyA == bodyB) {</span>
+<span class="nc" id="L79">      return;</span>
+    }
+
+    // TODO_ERIN use a hash table to remove a potential bottleneck when both
+    // bodies have a lot of contacts.
+    // Does a contact already exist?
+<span class="nc" id="L85">    ContactEdge edge = bodyB.getContactList();</span>
+<span class="nc bnc" id="L86" title="All 2 branches missed.">    while (edge != null) {</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">      if (edge.other == bodyA) {</span>
+<span class="nc" id="L88">        Fixture fA = edge.contact.getFixtureA();</span>
+<span class="nc" id="L89">        Fixture fB = edge.contact.getFixtureB();</span>
+<span class="nc" id="L90">        int iA = edge.contact.getChildIndexA();</span>
+<span class="nc" id="L91">        int iB = edge.contact.getChildIndexB();</span>
+
+<span class="nc bnc" id="L93" title="All 8 branches missed.">        if (fA == fixtureA &amp;&amp; iA == indexA &amp;&amp; fB == fixtureB &amp;&amp; iB == indexB) {</span>
+          // A contact already exists.
+<span class="nc" id="L95">          return;</span>
+        }
+
+<span class="nc bnc" id="L98" title="All 8 branches missed.">        if (fA == fixtureB &amp;&amp; iA == indexB &amp;&amp; fB == fixtureA &amp;&amp; iB == indexA) {</span>
+          // A contact already exists.
+<span class="nc" id="L100">          return;</span>
+        }
+      }
+
+<span class="nc" id="L104">      edge = edge.next;</span>
+    }
+
+    // Does a joint override collision? is at least one body dynamic?
+<span class="nc bnc" id="L108" title="All 2 branches missed.">    if (bodyB.shouldCollide(bodyA) == false) {</span>
+<span class="nc" id="L109">      return;</span>
+    }
+
+    // Check user filtering.
+<span class="nc bnc" id="L113" title="All 4 branches missed.">    if (m_contactFilter != null &amp;&amp; m_contactFilter.shouldCollide(fixtureA, fixtureB) == false) {</span>
+<span class="nc" id="L114">      return;</span>
+    }
+
+    // Call the factory.
+<span class="nc" id="L118">    Contact c = pool.popContact(fixtureA, indexA, fixtureB, indexB);</span>
+<span class="nc bnc" id="L119" title="All 2 branches missed.">    if (c == null) {</span>
+<span class="nc" id="L120">      return;</span>
+    }
+
+    // Contact creation may swap fixtures.
+<span class="nc" id="L124">    fixtureA = c.getFixtureA();</span>
+<span class="nc" id="L125">    fixtureB = c.getFixtureB();</span>
+<span class="nc" id="L126">    indexA = c.getChildIndexA();</span>
+<span class="nc" id="L127">    indexB = c.getChildIndexB();</span>
+<span class="nc" id="L128">    bodyA = fixtureA.getBody();</span>
+<span class="nc" id="L129">    bodyB = fixtureB.getBody();</span>
+
+    // Insert into the world.
+<span class="nc" id="L132">    c.m_prev = null;</span>
+<span class="nc" id="L133">    c.m_next = m_contactList;</span>
+<span class="nc bnc" id="L134" title="All 2 branches missed.">    if (m_contactList != null) {</span>
+<span class="nc" id="L135">      m_contactList.m_prev = c;</span>
+    }
+<span class="nc" id="L137">    m_contactList = c;</span>
+
+    // Connect to island graph.
+
+    // Connect to body A
+<span class="nc" id="L142">    c.m_nodeA.contact = c;</span>
+<span class="nc" id="L143">    c.m_nodeA.other = bodyB;</span>
+
+<span class="nc" id="L145">    c.m_nodeA.prev = null;</span>
+<span class="nc" id="L146">    c.m_nodeA.next = bodyA.m_contactList;</span>
+<span class="nc bnc" id="L147" title="All 2 branches missed.">    if (bodyA.m_contactList != null) {</span>
+<span class="nc" id="L148">      bodyA.m_contactList.prev = c.m_nodeA;</span>
+    }
+<span class="nc" id="L150">    bodyA.m_contactList = c.m_nodeA;</span>
+
+    // Connect to body B
+<span class="nc" id="L153">    c.m_nodeB.contact = c;</span>
+<span class="nc" id="L154">    c.m_nodeB.other = bodyA;</span>
+
+<span class="nc" id="L156">    c.m_nodeB.prev = null;</span>
+<span class="nc" id="L157">    c.m_nodeB.next = bodyB.m_contactList;</span>
+<span class="nc bnc" id="L158" title="All 2 branches missed.">    if (bodyB.m_contactList != null) {</span>
+<span class="nc" id="L159">      bodyB.m_contactList.prev = c.m_nodeB;</span>
+    }
+<span class="nc" id="L161">    bodyB.m_contactList = c.m_nodeB;</span>
+
+    // wake up the bodies
+<span class="nc bnc" id="L164" title="All 4 branches missed.">    if (!fixtureA.isSensor() &amp;&amp; !fixtureB.isSensor()) {</span>
+<span class="nc" id="L165">      bodyA.setAwake(true);</span>
+<span class="nc" id="L166">      bodyB.setAwake(true);</span>
+    }
+
+<span class="nc" id="L169">    ++m_contactCount;</span>
+<span class="nc" id="L170">  }</span>
+
+  public void findNewContacts() {
+<span class="nc" id="L173">    m_broadPhase.updatePairs(this);</span>
+<span class="nc" id="L174">  }</span>
+
+  public void destroy(Contact c) {
+<span class="nc" id="L177">    Fixture fixtureA = c.getFixtureA();</span>
+<span class="nc" id="L178">    Fixture fixtureB = c.getFixtureB();</span>
+<span class="nc" id="L179">    Body bodyA = fixtureA.getBody();</span>
+<span class="nc" id="L180">    Body bodyB = fixtureB.getBody();</span>
+
+<span class="nc bnc" id="L182" title="All 4 branches missed.">    if (m_contactListener != null &amp;&amp; c.isTouching()) {</span>
+<span class="nc" id="L183">      m_contactListener.endContact(c);</span>
+    }
+
+    // Remove from the world.
+<span class="nc bnc" id="L187" title="All 2 branches missed.">    if (c.m_prev != null) {</span>
+<span class="nc" id="L188">      c.m_prev.m_next = c.m_next;</span>
+    }
+
+<span class="nc bnc" id="L191" title="All 2 branches missed.">    if (c.m_next != null) {</span>
+<span class="nc" id="L192">      c.m_next.m_prev = c.m_prev;</span>
+    }
+
+<span class="nc bnc" id="L195" title="All 2 branches missed.">    if (c == m_contactList) {</span>
+<span class="nc" id="L196">      m_contactList = c.m_next;</span>
+    }
+
+    // Remove from body 1
+<span class="nc bnc" id="L200" title="All 2 branches missed.">    if (c.m_nodeA.prev != null) {</span>
+<span class="nc" id="L201">      c.m_nodeA.prev.next = c.m_nodeA.next;</span>
+    }
+
+<span class="nc bnc" id="L204" title="All 2 branches missed.">    if (c.m_nodeA.next != null) {</span>
+<span class="nc" id="L205">      c.m_nodeA.next.prev = c.m_nodeA.prev;</span>
+    }
+
+<span class="nc bnc" id="L208" title="All 2 branches missed.">    if (c.m_nodeA == bodyA.m_contactList) {</span>
+<span class="nc" id="L209">      bodyA.m_contactList = c.m_nodeA.next;</span>
+    }
+
+    // Remove from body 2
+<span class="nc bnc" id="L213" title="All 2 branches missed.">    if (c.m_nodeB.prev != null) {</span>
+<span class="nc" id="L214">      c.m_nodeB.prev.next = c.m_nodeB.next;</span>
+    }
+
+<span class="nc bnc" id="L217" title="All 2 branches missed.">    if (c.m_nodeB.next != null) {</span>
+<span class="nc" id="L218">      c.m_nodeB.next.prev = c.m_nodeB.prev;</span>
+    }
+
+<span class="nc bnc" id="L221" title="All 2 branches missed.">    if (c.m_nodeB == bodyB.m_contactList) {</span>
+<span class="nc" id="L222">      bodyB.m_contactList = c.m_nodeB.next;</span>
+    }
+
+    // Call the factory.
+<span class="nc" id="L226">    pool.pushContact(c);</span>
+<span class="nc" id="L227">    --m_contactCount;</span>
+<span class="nc" id="L228">  }</span>
+
+  /**
+   * This is the top level collision call for the time step. Here all the narrow phase collision is
+   * processed for the world contact list.
+   */
+  public void collide() {
+    // Update awake contacts.
+<span class="nc" id="L236">    Contact c = m_contactList;</span>
+<span class="nc bnc" id="L237" title="All 2 branches missed.">    while (c != null) {</span>
+<span class="nc" id="L238">      Fixture fixtureA = c.getFixtureA();</span>
+<span class="nc" id="L239">      Fixture fixtureB = c.getFixtureB();</span>
+<span class="nc" id="L240">      int indexA = c.getChildIndexA();</span>
+<span class="nc" id="L241">      int indexB = c.getChildIndexB();</span>
+<span class="nc" id="L242">      Body bodyA = fixtureA.getBody();</span>
+<span class="nc" id="L243">      Body bodyB = fixtureB.getBody();</span>
+
+      // is this contact flagged for filtering?
+<span class="nc bnc" id="L246" title="All 2 branches missed.">      if ((c.m_flags &amp; Contact.FILTER_FLAG) == Contact.FILTER_FLAG) {</span>
+        // Should these bodies collide?
+<span class="nc bnc" id="L248" title="All 2 branches missed.">        if (bodyB.shouldCollide(bodyA) == false) {</span>
+<span class="nc" id="L249">          Contact cNuke = c;</span>
+<span class="nc" id="L250">          c = cNuke.getNext();</span>
+<span class="nc" id="L251">          destroy(cNuke);</span>
+<span class="nc" id="L252">          continue;</span>
+        }
+
+        // Check user filtering.
+<span class="nc bnc" id="L256" title="All 4 branches missed.">        if (m_contactFilter != null &amp;&amp; m_contactFilter.shouldCollide(fixtureA, fixtureB) == false) {</span>
+<span class="nc" id="L257">          Contact cNuke = c;</span>
+<span class="nc" id="L258">          c = cNuke.getNext();</span>
+<span class="nc" id="L259">          destroy(cNuke);</span>
+<span class="nc" id="L260">          continue;</span>
+        }
+
+        // Clear the filtering flag.
+<span class="nc" id="L264">        c.m_flags &amp;= ~Contact.FILTER_FLAG;</span>
+      }
+
+<span class="nc bnc" id="L267" title="All 4 branches missed.">      boolean activeA = bodyA.isAwake() &amp;&amp; bodyA.m_type != BodyType.STATIC;</span>
+<span class="nc bnc" id="L268" title="All 4 branches missed.">      boolean activeB = bodyB.isAwake() &amp;&amp; bodyB.m_type != BodyType.STATIC;</span>
+
+      // At least one body must be awake and it must be dynamic or kinematic.
+<span class="nc bnc" id="L271" title="All 4 branches missed.">      if (activeA == false &amp;&amp; activeB == false) {</span>
+<span class="nc" id="L272">        c = c.getNext();</span>
+<span class="nc" id="L273">        continue;</span>
+      }
+
+<span class="nc" id="L276">      int proxyIdA = fixtureA.m_proxies[indexA].proxyId;</span>
+<span class="nc" id="L277">      int proxyIdB = fixtureB.m_proxies[indexB].proxyId;</span>
+<span class="nc" id="L278">      boolean overlap = m_broadPhase.testOverlap(proxyIdA, proxyIdB);</span>
+
+      // Here we destroy contacts that cease to overlap in the broad-phase.
+<span class="nc bnc" id="L281" title="All 2 branches missed.">      if (overlap == false) {</span>
+<span class="nc" id="L282">        Contact cNuke = c;</span>
+<span class="nc" id="L283">        c = cNuke.getNext();</span>
+<span class="nc" id="L284">        destroy(cNuke);</span>
+<span class="nc" id="L285">        continue;</span>
+      }
+
+      // The contact persists.
+<span class="nc" id="L289">      c.update(m_contactListener);</span>
+<span class="nc" id="L290">      c = c.getNext();</span>
+<span class="nc" id="L291">    }</span>
+<span class="nc" id="L292">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

@@ -1,0 +1,46 @@
+-------------------------------------------------------------------------------
+Test set: SoftwareTestingUnitTests.TestChainShape
+-------------------------------------------------------------------------------
+Tests run: 41, Failures: 9, Errors: 0, Skipped: 0, Time elapsed: 0.127 s <<< FAILURE! - in SoftwareTestingUnitTests.TestChainShape
+testNewChainNoChildren  Time elapsed: 0 s  <<< FAILURE!
+org.opentest4j.AssertionFailedError: expected: <0> but was: <-1>
+	at SoftwareTestingUnitTests.TestChainShape.testNewChainNoChildren(TestChainShape.java:76)
+
+testComputeAABBValidIndices  Time elapsed: 0.001 s  <<< FAILURE!
+org.opentest4j.AssertionFailedError: expected: <false> but was: <true>
+	at SoftwareTestingUnitTests.TestChainShape.testComputeAABBValidIndices(TestChainShape.java:304)
+
+testCloneOfNonEmptyChain  Time elapsed: 0.001 s  <<< FAILURE!
+java.lang.AssertionError
+	at SoftwareTestingUnitTests.TestChainShape.testCloneOfNonEmptyChain(TestChainShape.java:178)
+
+testCloneOfEmptyChain  Time elapsed: 0.001 s  <<< FAILURE!
+java.lang.AssertionError
+	at SoftwareTestingUnitTests.TestChainShape.testCloneOfEmptyChain(TestChainShape.java:163)
+
+testComputeAABB  Time elapsed: 0.001 s  <<< FAILURE!
+java.lang.AssertionError
+	at SoftwareTestingUnitTests.TestChainShape.testComputeAABB(TestChainShape.java:287)
+
+testComputeAABBPartitions  Time elapsed: 0.002 s  <<< FAILURE!
+org.opentest4j.AssertionFailedError: Expected java.lang.NullPointerException to be thrown, but nothing was thrown.
+	at SoftwareTestingUnitTests.TestChainShape.testComputeAABBPartitions(TestChainShape.java:271)
+
+testRaycastNotChildIndex  Time elapsed: 0.002 s  <<< FAILURE!
+org.opentest4j.AssertionFailedError: Unexpected exception type thrown, expected: <java.lang.NullPointerException> but was: <org.opentest4j.AssertionFailedError>
+	at SoftwareTestingUnitTests.TestChainShape.testRaycastNotChildIndex(TestChainShape.java:215)
+Caused by: org.opentest4j.AssertionFailedError: expected: <true> but was: <false>
+	at SoftwareTestingUnitTests.TestChainShape.lambda$testRaycastNotChildIndex$3(TestChainShape.java:216)
+	at SoftwareTestingUnitTests.TestChainShape.testRaycastNotChildIndex(TestChainShape.java:215)
+
+testGetChildEdgeNoChildChain  Time elapsed: 0.001 s  <<< FAILURE!
+java.lang.AssertionError
+	at SoftwareTestingUnitTests.TestChainShape.testGetChildEdgeNoChildChain(TestChainShape.java:82)
+
+testCreateChainPartitions  Time elapsed: 0.01 s  <<< FAILURE!
+org.opentest4j.AssertionFailedError: Unexpected exception type thrown, expected: <java.lang.AssertionError> but was: <java.lang.NullPointerException>
+	at SoftwareTestingUnitTests.TestChainShape.testCreateChainPartitions(TestChainShape.java:447)
+Caused by: java.lang.NullPointerException: Cannot load from object array because "vertices" is null
+	at SoftwareTestingUnitTests.TestChainShape.lambda$testCreateChainPartitions$16(TestChainShape.java:448)
+	at SoftwareTestingUnitTests.TestChainShape.testCreateChainPartitions(TestChainShape.java:447)
+

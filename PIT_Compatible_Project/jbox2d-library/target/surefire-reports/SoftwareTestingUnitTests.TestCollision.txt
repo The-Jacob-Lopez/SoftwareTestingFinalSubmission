@@ -1,0 +1,20 @@
+-------------------------------------------------------------------------------
+Test set: SoftwareTestingUnitTests.TestCollision
+-------------------------------------------------------------------------------
+Tests run: 78, Failures: 4, Errors: 0, Skipped: 0, Time elapsed: 0.373 s <<< FAILURE! - in SoftwareTestingUnitTests.TestCollision
+testCollidePolygons{Vec2[], Vec2[], int, ManifoldType}[8]  Time elapsed: 0.002 s  <<< FAILURE!
+org.opentest4j.AssertionFailedError: expected: <0> but was: <2>
+	at SoftwareTestingUnitTests.TestCollision.testCollidePolygons(TestCollision.java:231)
+
+testCollidePolygonsFlipped{Vec2[], Vec2[], int, ManifoldType}[8]  Time elapsed: 0.001 s  <<< FAILURE!
+org.opentest4j.AssertionFailedError: expected: <0> but was: <2>
+	at SoftwareTestingUnitTests.TestCollision.testCollidePolygonsFlipped(TestCollision.java:245)
+
+testEdgeSeparation{Vec2[], Vec2[], int, float}[2]  Time elapsed: 0.002 s  <<< FAILURE!
+java.lang.AssertionError
+	at SoftwareTestingUnitTests.TestCollision.testEdgeSeparation(TestCollision.java:163)
+
+testEdgeSeparation{Vec2[], Vec2[], int, float}[3]  Time elapsed: 0.002 s  <<< FAILURE!
+java.lang.AssertionError
+	at SoftwareTestingUnitTests.TestCollision.testEdgeSeparation(TestCollision.java:163)
+

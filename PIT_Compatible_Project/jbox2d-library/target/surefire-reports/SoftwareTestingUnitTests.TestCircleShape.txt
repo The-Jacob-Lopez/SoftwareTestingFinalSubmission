@@ -1,0 +1,28 @@
+-------------------------------------------------------------------------------
+Test set: SoftwareTestingUnitTests.TestCircleShape
+-------------------------------------------------------------------------------
+Tests run: 37, Failures: 6, Errors: 0, Skipped: 0, Time elapsed: 0.141 s <<< FAILURE! - in SoftwareTestingUnitTests.TestCircleShape
+testTestPoint{float, Vec2, boolean}[2]  Time elapsed: 0.026 s  <<< FAILURE!
+org.opentest4j.AssertionFailedError: expected: <true> but was: <false>
+	at SoftwareTestingUnitTests.TestCircleShape.testTestPoint(TestCircleShape.java:112)
+
+testTestPoint{float, Vec2, boolean}[6]  Time elapsed: 0.002 s  <<< FAILURE!
+org.opentest4j.AssertionFailedError: expected: <false> but was: <true>
+	at SoftwareTestingUnitTests.TestCircleShape.testTestPoint(TestCircleShape.java:112)
+
+testTestPoint{float, Vec2, boolean}[7]  Time elapsed: 0.001 s  <<< FAILURE!
+org.opentest4j.AssertionFailedError: expected: <false> but was: <true>
+	at SoftwareTestingUnitTests.TestCircleShape.testTestPoint(TestCircleShape.java:112)
+
+testRaycast{Vec2, Vec2, float, boolean}[11]  Time elapsed: 0.001 s  <<< FAILURE!
+org.opentest4j.AssertionFailedError: expected: <true> but was: <false>
+	at SoftwareTestingUnitTests.TestCircleShape.testRaycast(TestCircleShape.java:171)
+
+testGetVertex{int}[1]  Time elapsed: 0.004 s  <<< FAILURE!
+java.lang.AssertionError
+	at SoftwareTestingUnitTests.TestCircleShape.testGetVertex(TestCircleShape.java:83)
+
+testGetVertex{int}[3]  Time elapsed: 0.001 s  <<< FAILURE!
+java.lang.AssertionError
+	at SoftwareTestingUnitTests.TestCircleShape.testGetVertex(TestCircleShape.java:83)
+

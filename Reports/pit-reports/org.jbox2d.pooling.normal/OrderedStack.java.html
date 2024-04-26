@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <link rel="stylesheet" type="text/css" href="../style.css">
+</head>
+<body>
+
+
+<h1>OrderedStack.java</h1>
+
+<table class="src">
+
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_1'/>
+1
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_1'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>/*******************************************************************************</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_2'/>
+2
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_2'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * Copyright (c) 2013, Daniel Murphy</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_3'/>
+3
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_3'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * All rights reserved.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_4'/>
+4
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_4'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * </span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_5'/>
+5
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_5'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * Redistribution and use in source and binary forms, with or without modification,</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_6'/>
+6
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_6'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * are permitted provided that the following conditions are met:</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_7'/>
+7
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_7'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * &#9;* Redistributions of source code must retain the above copyright notice,</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_8'/>
+8
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_8'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * &#9;  this list of conditions and the following disclaimer.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_9'/>
+9
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_9'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * &#9;* Redistributions in binary form must reproduce the above copyright notice,</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_10'/>
+10
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_10'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * &#9;  this list of conditions and the following disclaimer in the documentation</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_11'/>
+11
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_11'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * &#9;  and/or other materials provided with the distribution.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_12'/>
+12
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_12'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * </span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_13'/>
+13
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_13'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &#34;AS IS&#34; AND</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_14'/>
+14
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_14'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_15'/>
+15
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_15'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_16'/>
+16
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_16'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_17'/>
+17
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_17'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_18'/>
+18
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_18'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_19'/>
+19
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_19'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_20'/>
+20
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_20'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_21'/>
+21
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_21'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_22'/>
+22
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_22'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * POSSIBILITY OF SUCH DAMAGE.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_23'/>
+23
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_23'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> ******************************************************************************/</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_24'/>
+24
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_24'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>/**</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_25'/>
+25
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_25'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * Created at 12:52:04 AM Jan 20, 2011</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_26'/>
+26
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_26'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> */</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_27'/>
+27
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_27'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>package org.jbox2d.pooling.normal;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_28'/>
+28
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_28'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_29'/>
+29
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_29'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>/**</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_30'/>
+30
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_30'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * @author Daniel Murphy</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_31'/>
+31
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_31'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> */</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_32'/>
+32
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_32'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>public abstract class OrderedStack&#60;E&#62; {</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_33'/>
+33
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_33'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_34'/>
+34
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_34'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  private final Object[] pool;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_35'/>
+35
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_35'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  private int index;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_36'/>
+36
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_36'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  private final int size;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_37'/>
+37
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_37'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  private final Object[] container;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_38'/>
+38
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_38'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_39'/>
+39
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_39'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>  public OrderedStack(int argStackSize, int argContainerSize) {</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_40'/>
+40
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_40'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    size = argStackSize;</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_41'/>
+41
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_41'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    pool = new Object[argStackSize];</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_42'/>
+42
+</td>
+<td class='survived'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_42'>2</a>
+<span>
+1. &#60;init&#62; : negated conditional &rarr; SURVIVED<br/>
+2. &#60;init&#62; : changed conditional boundary &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='survived'>    for (int i = 0; i &#60; argStackSize; i++) {</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_43'/>
+43
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_43'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>      pool[i] = newInstance();</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_44'/>
+44
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_44'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_45'/>
+45
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_45'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    index = 0;</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_46'/>
+46
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_46'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    container = new Object[argContainerSize];</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_47'/>
+47
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_47'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>  }</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_48'/>
+48
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_48'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_49'/>
+49
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_49'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @SuppressWarnings(&#34;unchecked&#34;)</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_50'/>
+50
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_50'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public final E pop() {</span></pre></td></tr>
+
+
+<tr>
+<td class='uncovered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_51'/>
+51
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_51'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='uncovered'><pre><span  class=''>    assert (index &#60; size) : &#34;End of stack reached, there is probably a leak somewhere&#34;;</span></pre></td></tr>
+
+
+<tr>
+<td class='uncovered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_52'/>
+52
+</td>
+<td class='survived'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_52'>2</a>
+<span>
+1. pop : replaced return value with null for org/jbox2d/pooling/normal/OrderedStack::pop &rarr; NO_COVERAGE<br/>
+2. pop : Replaced integer addition with subtraction &rarr; NO_COVERAGE<br/>
+
+</span>
+</span>
+</td>
+<td class='uncovered'><pre><span  class='survived'>    return (E) pool[index++];</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_53'/>
+53
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_53'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_54'/>
+54
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_54'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_55'/>
+55
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_55'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @SuppressWarnings(&#34;unchecked&#34;)</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_56'/>
+56
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_56'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public final E[] pop(int argNum) {</span></pre></td></tr>
+
+
+<tr>
+<td class='uncovered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_57'/>
+57
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_57'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='uncovered'><pre><span  class=''>    assert (index + argNum &#60; size) : &#34;End of stack reached, there is probably a leak somewhere&#34;;</span></pre></td></tr>
+
+
+<tr>
+<td class='uncovered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_58'/>
+58
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_58'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='uncovered'><pre><span  class=''>    assert (argNum &#60;= container.length) : &#34;Container array is too small&#34;;</span></pre></td></tr>
+
+
+<tr>
+<td class='uncovered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_59'/>
+59
+</td>
+<td class='survived'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_59'>1</a>
+<span>
+1. pop : removed call to java/lang/System::arraycopy &rarr; NO_COVERAGE<br/>
+
+</span>
+</span>
+</td>
+<td class='uncovered'><pre><span  class='survived'>    System.arraycopy(pool, index, container, 0, argNum);</span></pre></td></tr>
+
+
+<tr>
+<td class='uncovered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_60'/>
+60
+</td>
+<td class='survived'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_60'>1</a>
+<span>
+1. pop : Replaced integer addition with subtraction &rarr; NO_COVERAGE<br/>
+
+</span>
+</span>
+</td>
+<td class='uncovered'><pre><span  class='survived'>    index += argNum;</span></pre></td></tr>
+
+
+<tr>
+<td class='uncovered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_61'/>
+61
+</td>
+<td class='survived'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_61'>1</a>
+<span>
+1. pop : replaced return value with null for org/jbox2d/pooling/normal/OrderedStack::pop &rarr; NO_COVERAGE<br/>
+
+</span>
+</span>
+</td>
+<td class='uncovered'><pre><span  class='survived'>    return (E[]) container;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_62'/>
+62
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_62'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_63'/>
+63
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_63'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_64'/>
+64
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_64'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public final void push(int argNum) {</span></pre></td></tr>
+
+
+<tr>
+<td class='uncovered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_65'/>
+65
+</td>
+<td class='survived'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_65'>1</a>
+<span>
+1. push : Replaced integer subtraction with addition &rarr; NO_COVERAGE<br/>
+
+</span>
+</span>
+</td>
+<td class='uncovered'><pre><span  class='survived'>    index -= argNum;</span></pre></td></tr>
+
+
+<tr>
+<td class='uncovered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_66'/>
+66
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_66'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='uncovered'><pre><span  class=''>    assert (index &#62;= 0) : &#34;Beginning of stack reached, push/pops are unmatched&#34;;</span></pre></td></tr>
+
+
+<tr>
+<td class='uncovered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_67'/>
+67
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_67'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='uncovered'><pre><span  class=''>  }</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_68'/>
+68
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_68'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_69'/>
+69
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_69'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /** Creates a new instance of the object contained by this stack. */</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_70'/>
+70
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_70'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  protected abstract E newInstance();</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_71'/>
+71
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_71'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>}</span></pre></td></tr>
+
+
+
+<tr><td></td><td></td><td><h2>Mutations</h2></td></tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_42'>42</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_42'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>&#60;init&#62;<br/><b>Killed by : </b>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollideCircles(float, float, float, float, float, float, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#2]</span></span> changed conditional boundary &rarr; KILLED</p> <p class='SURVIVED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>&#60;init&#62;<br/><b>Killed by : </b>none</span></span> negated conditional &rarr; SURVIVED</p> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_52'>52</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_52'/> 
+
+<p class='NO_COVERAGE'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>pop<br/><b>Killed by : </b>none</span></span> replaced return value with null for org/jbox2d/pooling/normal/OrderedStack::pop &rarr; NO_COVERAGE</p> <p class='NO_COVERAGE'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>pop<br/><b>Killed by : </b>none</span></span> Replaced integer addition with subtraction &rarr; NO_COVERAGE</p> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_59'>59</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_59'/> 
+
+<p class='NO_COVERAGE'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>pop<br/><b>Killed by : </b>none</span></span> removed call to java/lang/System::arraycopy &rarr; NO_COVERAGE</p> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_60'>60</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_60'/> 
+
+<p class='NO_COVERAGE'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>pop<br/><b>Killed by : </b>none</span></span> Replaced integer addition with subtraction &rarr; NO_COVERAGE</p> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_61'>61</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_61'/> 
+
+<p class='NO_COVERAGE'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>pop<br/><b>Killed by : </b>none</span></span> replaced return value with null for org/jbox2d/pooling/normal/OrderedStack::pop &rarr; NO_COVERAGE</p> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@39ef6a8c_65'>65</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@39ef6a8c_65'/> 
+
+<p class='NO_COVERAGE'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>push<br/><b>Killed by : </b>none</span></span> Replaced integer subtraction with addition &rarr; NO_COVERAGE</p> 
+</td>
+</tr>
+
+</table>
+
+
+<h2>Active mutators</h2>
+<ul>
+<li class='mutator'>CONDITIONALS_BOUNDARY</li>
+<li class='mutator'>EMPTY_RETURNS</li>
+<li class='mutator'>FALSE_RETURNS</li>
+<li class='mutator'>INCREMENTS</li>
+<li class='mutator'>INVERT_NEGS</li>
+<li class='mutator'>MATH</li>
+<li class='mutator'>NEGATE_CONDITIONALS</li>
+<li class='mutator'>NULL_RETURNS</li>
+<li class='mutator'>PRIMITIVE_RETURNS</li>
+<li class='mutator'>TRUE_RETURNS</li>
+<li class='mutator'>VOID_METHOD_CALLS</li>
+
+</ul>
+
+<h2>Tests examined</h2>
+<ul>
+<li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollideCircles(float, float, float, float, float, float, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#2] (2 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollideEdgeAndCircle(float, float, float, org.jbox2d.common.Vec2, org.jbox2d.common.Vec2, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#6] (1 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollideEdgeAndCircle(float, float, float, org.jbox2d.common.Vec2, org.jbox2d.common.Vec2, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#15] (2 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollideEdgeAndCircle(float, float, float, org.jbox2d.common.Vec2, org.jbox2d.common.Vec2, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#13] (1 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollideEdgeAndCircle(float, float, float, org.jbox2d.common.Vec2, org.jbox2d.common.Vec2, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#2] (1 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollideEdgeAndCircle2(float, float, float, org.jbox2d.common.Vec2, org.jbox2d.common.Vec2, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#15] (3 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollideEdgeAndCircle(float, float, float, org.jbox2d.common.Vec2, org.jbox2d.common.Vec2, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#14] (2 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollideEdgeAndCircle(float, float, float, org.jbox2d.common.Vec2, org.jbox2d.common.Vec2, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#12] (2 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollideEdgeAndCircle(float, float, float, org.jbox2d.common.Vec2, org.jbox2d.common.Vec2, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#3] (1 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollideEdgeAndCircle(float, float, float, org.jbox2d.common.Vec2, org.jbox2d.common.Vec2, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#11] (3 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollideEdgeAndCircle2(float, float, float, org.jbox2d.common.Vec2, org.jbox2d.common.Vec2, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#12] (3 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollideEdgeAndCircle(float, float, float, org.jbox2d.common.Vec2, org.jbox2d.common.Vec2, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#9] (1 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollideEdgeAndCircle2(float, float, float, org.jbox2d.common.Vec2, org.jbox2d.common.Vec2, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#1] (2 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollideEdgeAndCircle(float, float, float, org.jbox2d.common.Vec2, org.jbox2d.common.Vec2, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#5] (2 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollideEdgeAndCircle2(float, float, float, org.jbox2d.common.Vec2, org.jbox2d.common.Vec2, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#7] (2 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollideCircles(float, float, float, float, float, float, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#1] (7 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollideEdgeAndCircle(float, float, float, org.jbox2d.common.Vec2, org.jbox2d.common.Vec2, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#8] (2 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollideEdgeAndCircle(float, float, float, org.jbox2d.common.Vec2, org.jbox2d.common.Vec2, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#4] (2 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollideEdgeAndCircle2(float, float, float, org.jbox2d.common.Vec2, org.jbox2d.common.Vec2, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#6] (5 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollideEdgeAndCircle(float, float, float, org.jbox2d.common.Vec2, org.jbox2d.common.Vec2, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#10] (2 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollideEdgeAndCircle(float, float, float, org.jbox2d.common.Vec2, org.jbox2d.common.Vec2, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#7] (2 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollideEdgeAndCircle2(float, float, float, org.jbox2d.common.Vec2, org.jbox2d.common.Vec2, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#3] (3 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollideEdgeAndCircle2(float, float, float, org.jbox2d.common.Vec2, org.jbox2d.common.Vec2, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#5] (3 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollideEdgeAndCircle2(float, float, float, org.jbox2d.common.Vec2, org.jbox2d.common.Vec2, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#8] (3 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollideEdgeAndCircle2(float, float, float, org.jbox2d.common.Vec2, org.jbox2d.common.Vec2, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#4] (4 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollideEdgeAndCircle2(float, float, float, org.jbox2d.common.Vec2, org.jbox2d.common.Vec2, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#11] (7 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollideEdgeAndCircle2(float, float, float, org.jbox2d.common.Vec2, org.jbox2d.common.Vec2, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#10] (5 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollideEdgeAndCircle2(float, float, float, org.jbox2d.common.Vec2, org.jbox2d.common.Vec2, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#13] (8 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollideEdgeAndCircle(float, float, float, org.jbox2d.common.Vec2, org.jbox2d.common.Vec2, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#1] (6 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollidePolygonAndCircle(float, float, float, %5BLorg.jbox2d.common.Vec2;, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#2] (1 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollideEdgeAndCircle2(float, float, float, org.jbox2d.common.Vec2, org.jbox2d.common.Vec2, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#2] (9 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollidePolygonAndCircle(float, float, float, %5BLorg.jbox2d.common.Vec2;, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#5] (1 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollidePolygonAndCircle(float, float, float, %5BLorg.jbox2d.common.Vec2;, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#9] (1 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollideEdgeAndCircle2(float, float, float, org.jbox2d.common.Vec2, org.jbox2d.common.Vec2, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#9] (9 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollidePolygonAndCircle(float, float, float, %5BLorg.jbox2d.common.Vec2;, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#6] (1 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollidePolygonAndCircle(float, float, float, %5BLorg.jbox2d.common.Vec2;, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#8] (1 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollidePolygonAndCircle(float, float, float, %5BLorg.jbox2d.common.Vec2;, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#4] (2 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollidePolygons(%5BLorg.jbox2d.common.Vec2;, %5BLorg.jbox2d.common.Vec2;, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#11] (1 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollidePolygonsFlipped(%5BLorg.jbox2d.common.Vec2;, %5BLorg.jbox2d.common.Vec2;, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#11] (1 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollidePolygons(%5BLorg.jbox2d.common.Vec2;, %5BLorg.jbox2d.common.Vec2;, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#7] (1 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollidePolygonAndCircle(float, float, float, %5BLorg.jbox2d.common.Vec2;, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#7] (1 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollidePolygons(%5BLorg.jbox2d.common.Vec2;, %5BLorg.jbox2d.common.Vec2;, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#10] (1 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollidePolygonAndCircle(float, float, float, %5BLorg.jbox2d.common.Vec2;, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#3] (1 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollidePolygonsFlipped(%5BLorg.jbox2d.common.Vec2;, %5BLorg.jbox2d.common.Vec2;, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#4] (1 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollidePolygons(%5BLorg.jbox2d.common.Vec2;, %5BLorg.jbox2d.common.Vec2;, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#4] (1 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollidePolygonsFlipped(%5BLorg.jbox2d.common.Vec2;, %5BLorg.jbox2d.common.Vec2;, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#10] (1 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollidePolygonsFlipped(%5BLorg.jbox2d.common.Vec2;, %5BLorg.jbox2d.common.Vec2;, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#7] (2 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollidePolygonsConcave(%5BLorg.jbox2d.common.Vec2;, %5BLorg.jbox2d.common.Vec2;, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#1] (2 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testEdgeSeparation(%5BLorg.jbox2d.common.Vec2;, %5BLorg.jbox2d.common.Vec2;, int, float)]/[test-template-invocation:#1] (5 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollideEdgeAndCircle2(float, float, float, org.jbox2d.common.Vec2, org.jbox2d.common.Vec2, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#14] (14 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollidePolygonsFlipped(%5BLorg.jbox2d.common.Vec2;, %5BLorg.jbox2d.common.Vec2;, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#1] (1 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testTestOverlap(float, float, float, float, float, boolean)]/[test-template-invocation:#2] (2 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollidePolygonsFlipped(%5BLorg.jbox2d.common.Vec2;, %5BLorg.jbox2d.common.Vec2;, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#9] (1 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollidePolygonsFlipped(%5BLorg.jbox2d.common.Vec2;, %5BLorg.jbox2d.common.Vec2;, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#3] (1 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollidePolygons(%5BLorg.jbox2d.common.Vec2;, %5BLorg.jbox2d.common.Vec2;, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#5] (1 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollidePolygons(%5BLorg.jbox2d.common.Vec2;, %5BLorg.jbox2d.common.Vec2;, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#9] (1 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollidePolygonAndCircle(float, float, float, %5BLorg.jbox2d.common.Vec2;, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#1] (7 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollidePolygonsFlipped(%5BLorg.jbox2d.common.Vec2;, %5BLorg.jbox2d.common.Vec2;, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#2] (1 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollidePolygons(%5BLorg.jbox2d.common.Vec2;, %5BLorg.jbox2d.common.Vec2;, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#2] (1 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollidePolygons(%5BLorg.jbox2d.common.Vec2;, %5BLorg.jbox2d.common.Vec2;, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#8] (1 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollidePolygons(%5BLorg.jbox2d.common.Vec2;, %5BLorg.jbox2d.common.Vec2;, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#6] (1 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testGetPointStates(float, float, float, %5BLorg.jbox2d.common.Vec2;)]/[test-template-invocation:#1] (5 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollidePolygonsFlipped(%5BLorg.jbox2d.common.Vec2;, %5BLorg.jbox2d.common.Vec2;, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#5] (2 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollidePolygons(%5BLorg.jbox2d.common.Vec2;, %5BLorg.jbox2d.common.Vec2;, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#3] (2 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollidePolygonsFlipped(%5BLorg.jbox2d.common.Vec2;, %5BLorg.jbox2d.common.Vec2;, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#8] (2 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollidePolygonsFlipped(%5BLorg.jbox2d.common.Vec2;, %5BLorg.jbox2d.common.Vec2;, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#6] (2 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testCollidePolygons(%5BLorg.jbox2d.common.Vec2;, %5BLorg.jbox2d.common.Vec2;, int, org.jbox2d.collision.Manifold$ManifoldType)]/[test-template-invocation:#1] (4 ms)</li><li>SoftwareTestingUnitTests.TestCollision.[engine:junit-jupiter]/[class:SoftwareTestingUnitTests.TestCollision]/[test-template:testTestOverlap(float, float, float, float, float, boolean)]/[test-template-invocation:#1] (87 ms)</li>
+</ul>
+
+<br/>
+
+Report generated by <a href='https://pitest.org'>PIT</a> 1.15.2
+
+</body>
+</html>

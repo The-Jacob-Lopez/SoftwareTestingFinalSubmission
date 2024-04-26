@@ -1,0 +1,809 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PrismaticJoint.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">jbox2d-library</a> &gt; <a href="index.source.html" class="el_package">org.jbox2d.dynamics.joints</a> &gt; <span class="el_source">PrismaticJoint.java</span></div><h1>PrismaticJoint.java</h1><pre class="source lang-java linenums">/*******************************************************************************
+ * Copyright (c) 2013, Daniel Murphy
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ * 	* Redistributions of source code must retain the above copyright notice,
+ * 	  this list of conditions and the following disclaimer.
+ * 	* Redistributions in binary form must reproduce the above copyright notice,
+ * 	  this list of conditions and the following disclaimer in the documentation
+ * 	  and/or other materials provided with the distribution.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot; AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ ******************************************************************************/
+package org.jbox2d.dynamics.joints;
+
+import org.jbox2d.common.Mat22;
+import org.jbox2d.common.Mat33;
+import org.jbox2d.common.MathUtils;
+import org.jbox2d.common.Rot;
+import org.jbox2d.common.Settings;
+import org.jbox2d.common.Vec2;
+import org.jbox2d.common.Vec3;
+import org.jbox2d.dynamics.Body;
+import org.jbox2d.dynamics.SolverData;
+import org.jbox2d.pooling.IWorldPool;
+
+//Linear constraint (point-to-line)
+//d = p2 - p1 = x2 + r2 - x1 - r1
+//C = dot(perp, d)
+//Cdot = dot(d, cross(w1, perp)) + dot(perp, v2 + cross(w2, r2) - v1 - cross(w1, r1))
+//   = -dot(perp, v1) - dot(cross(d + r1, perp), w1) + dot(perp, v2) + dot(cross(r2, perp), v2)
+//J = [-perp, -cross(d + r1, perp), perp, cross(r2,perp)]
+//
+//Angular constraint
+//C = a2 - a1 + a_initial
+//Cdot = w2 - w1
+//J = [0 0 -1 0 0 1]
+//
+//K = J * invM * JT
+//
+//J = [-a -s1 a s2]
+//  [0  -1  0  1]
+//a = perp
+//s1 = cross(d + r1, a) = cross(p2 - x1, a)
+//s2 = cross(r2, a) = cross(p2 - x2, a)
+
+
+//Motor/Limit linear constraint
+//C = dot(ax1, d)
+//Cdot = = -dot(ax1, v1) - dot(cross(d + r1, ax1), w1) + dot(ax1, v2) + dot(cross(r2, ax1), v2)
+//J = [-ax1 -cross(d+r1,ax1) ax1 cross(r2,ax1)]
+
+//Block Solver
+//We develop a block solver that includes the joint limit. This makes the limit stiff (inelastic) even
+//when the mass has poor distribution (leading to large torques about the joint anchor points).
+//
+//The Jacobian has 3 rows:
+//J = [-uT -s1 uT s2] // linear
+//  [0   -1   0  1] // angular
+//  [-vT -a1 vT a2] // limit
+//
+//u = perp
+//v = axis
+//s1 = cross(d + r1, u), s2 = cross(r2, u)
+//a1 = cross(d + r1, v), a2 = cross(r2, v)
+
+//M * (v2 - v1) = JT * df
+//J * v2 = bias
+//
+//v2 = v1 + invM * JT * df
+//J * (v1 + invM * JT * df) = bias
+//K * df = bias - J * v1 = -Cdot
+//K = J * invM * JT
+//Cdot = J * v1 - bias
+//
+//Now solve for f2.
+//df = f2 - f1
+//K * (f2 - f1) = -Cdot
+//f2 = invK * (-Cdot) + f1
+//
+//Clamp accumulated limit impulse.
+//lower: f2(3) = max(f2(3), 0)
+//upper: f2(3) = min(f2(3), 0)
+//
+//Solve for correct f2(1:2)
+//K(1:2, 1:2) * f2(1:2) = -Cdot(1:2) - K(1:2,3) * f2(3) + K(1:2,1:3) * f1
+//                    = -Cdot(1:2) - K(1:2,3) * f2(3) + K(1:2,1:2) * f1(1:2) + K(1:2,3) * f1(3)
+//K(1:2, 1:2) * f2(1:2) = -Cdot(1:2) - K(1:2,3) * (f2(3) - f1(3)) + K(1:2,1:2) * f1(1:2)
+//f2(1:2) = invK(1:2,1:2) * (-Cdot(1:2) - K(1:2,3) * (f2(3) - f1(3))) + f1(1:2)
+//
+//Now compute impulse to be applied:
+//df = f2 - f1
+
+/**
+ * A prismatic joint. This joint provides one degree of freedom: translation along an axis fixed in
+ * bodyA. Relative rotation is prevented. You can use a joint limit to restrict the range of motion
+ * and a joint motor to drive the motion or to model joint friction.
+ * 
+ * @author Daniel
+ */
+<span class="nc bnc" id="L111" title="All 2 branches missed.">public class PrismaticJoint extends Joint {</span>
+
+  // Solver shared
+  protected final Vec2 m_localAnchorA;
+  protected final Vec2 m_localAnchorB;
+  protected final Vec2 m_localXAxisA;
+  protected final Vec2 m_localYAxisA;
+  protected float m_referenceAngle;
+  private final Vec3 m_impulse;
+  private float m_motorImpulse;
+  private float m_lowerTranslation;
+  private float m_upperTranslation;
+  private float m_maxMotorForce;
+  private float m_motorSpeed;
+  private boolean m_enableLimit;
+  private boolean m_enableMotor;
+  private LimitState m_limitState;
+
+  // Solver temp
+  private int m_indexA;
+  private int m_indexB;
+<span class="nc" id="L132">  private final Vec2 m_localCenterA = new Vec2();</span>
+<span class="nc" id="L133">  private final Vec2 m_localCenterB = new Vec2();</span>
+  private float m_invMassA;
+  private float m_invMassB;
+  private float m_invIA;
+  private float m_invIB;
+  private final Vec2 m_axis, m_perp;
+  private float m_s1, m_s2;
+  private float m_a1, m_a2;
+  private final Mat33 m_K;
+  private float m_motorMass; // effective mass for motor/limit translational constraint.
+
+  protected PrismaticJoint(IWorldPool argWorld, PrismaticJointDef def) {
+<span class="nc" id="L145">    super(argWorld, def);</span>
+<span class="nc" id="L146">    m_localAnchorA = new Vec2(def.localAnchorA);</span>
+<span class="nc" id="L147">    m_localAnchorB = new Vec2(def.localAnchorB);</span>
+<span class="nc" id="L148">    m_localXAxisA = new Vec2(def.localAxisA);</span>
+<span class="nc" id="L149">    m_localXAxisA.normalize();</span>
+<span class="nc" id="L150">    m_localYAxisA = new Vec2();</span>
+<span class="nc" id="L151">    Vec2.crossToOutUnsafe(1f, m_localXAxisA, m_localYAxisA);</span>
+<span class="nc" id="L152">    m_referenceAngle = def.referenceAngle;</span>
+
+<span class="nc" id="L154">    m_impulse = new Vec3();</span>
+<span class="nc" id="L155">    m_motorMass = 0.0f;</span>
+<span class="nc" id="L156">    m_motorImpulse = 0.0f;</span>
+
+<span class="nc" id="L158">    m_lowerTranslation = def.lowerTranslation;</span>
+<span class="nc" id="L159">    m_upperTranslation = def.upperTranslation;</span>
+<span class="nc" id="L160">    m_maxMotorForce = def.maxMotorForce;</span>
+<span class="nc" id="L161">    m_motorSpeed = def.motorSpeed;</span>
+<span class="nc" id="L162">    m_enableLimit = def.enableLimit;</span>
+<span class="nc" id="L163">    m_enableMotor = def.enableMotor;</span>
+<span class="nc" id="L164">    m_limitState = LimitState.INACTIVE;</span>
+
+<span class="nc" id="L166">    m_K = new Mat33();</span>
+<span class="nc" id="L167">    m_axis = new Vec2();</span>
+<span class="nc" id="L168">    m_perp = new Vec2();</span>
+<span class="nc" id="L169">  }</span>
+
+  public Vec2 getLocalAnchorA() {
+<span class="nc" id="L172">    return m_localAnchorA;</span>
+  }
+
+  public Vec2 getLocalAnchorB() {
+<span class="nc" id="L176">    return m_localAnchorB;</span>
+  }
+
+  @Override
+  public void getAnchorA(Vec2 argOut) {
+<span class="nc" id="L181">    m_bodyA.getWorldPointToOut(m_localAnchorA, argOut);</span>
+<span class="nc" id="L182">  }</span>
+
+  @Override
+  public void getAnchorB(Vec2 argOut) {
+<span class="nc" id="L186">    m_bodyB.getWorldPointToOut(m_localAnchorB, argOut);</span>
+<span class="nc" id="L187">  }</span>
+
+  @Override
+  public void getReactionForce(float inv_dt, Vec2 argOut) {
+<span class="nc" id="L191">    Vec2 temp = pool.popVec2();</span>
+<span class="nc" id="L192">    temp.set(m_axis).mulLocal(m_motorImpulse + m_impulse.z);</span>
+<span class="nc" id="L193">    argOut.set(m_perp).mulLocal(m_impulse.x).addLocal(temp).mulLocal(inv_dt);</span>
+<span class="nc" id="L194">    pool.pushVec2(1);</span>
+<span class="nc" id="L195">  }</span>
+
+  @Override
+  public float getReactionTorque(float inv_dt) {
+<span class="nc" id="L199">    return inv_dt * m_impulse.y;</span>
+  }
+
+  /**
+   * Get the current joint translation, usually in meters.
+   */
+  public float getJointSpeed() {
+<span class="nc" id="L206">    Body bA = m_bodyA;</span>
+<span class="nc" id="L207">    Body bB = m_bodyB;</span>
+
+<span class="nc" id="L209">    Vec2 temp = pool.popVec2();</span>
+<span class="nc" id="L210">    Vec2 rA = pool.popVec2();</span>
+<span class="nc" id="L211">    Vec2 rB = pool.popVec2();</span>
+<span class="nc" id="L212">    Vec2 p1 = pool.popVec2();</span>
+<span class="nc" id="L213">    Vec2 p2 = pool.popVec2();</span>
+<span class="nc" id="L214">    Vec2 d = pool.popVec2();</span>
+<span class="nc" id="L215">    Vec2 axis = pool.popVec2();</span>
+<span class="nc" id="L216">    Vec2 temp2 = pool.popVec2();</span>
+<span class="nc" id="L217">    Vec2 temp3 = pool.popVec2();</span>
+
+<span class="nc" id="L219">    temp.set(m_localAnchorA).subLocal(bA.m_sweep.localCenter);</span>
+<span class="nc" id="L220">    Rot.mulToOutUnsafe(bA.m_xf.q, temp, rA);</span>
+
+<span class="nc" id="L222">    temp.set(m_localAnchorB).subLocal(bB.m_sweep.localCenter);</span>
+<span class="nc" id="L223">    Rot.mulToOutUnsafe(bB.m_xf.q, temp, rB);</span>
+
+<span class="nc" id="L225">    p1.set(bA.m_sweep.c).addLocal(rA);</span>
+<span class="nc" id="L226">    p2.set(bB.m_sweep.c).addLocal(rB);</span>
+
+<span class="nc" id="L228">    d.set(p2).subLocal(p1);</span>
+<span class="nc" id="L229">    Rot.mulToOutUnsafe(bA.m_xf.q, m_localXAxisA, axis);</span>
+
+<span class="nc" id="L231">    Vec2 vA = bA.m_linearVelocity;</span>
+<span class="nc" id="L232">    Vec2 vB = bB.m_linearVelocity;</span>
+<span class="nc" id="L233">    float wA = bA.m_angularVelocity;</span>
+<span class="nc" id="L234">    float wB = bB.m_angularVelocity;</span>
+
+
+<span class="nc" id="L237">    Vec2.crossToOutUnsafe(wA, axis, temp);</span>
+<span class="nc" id="L238">    Vec2.crossToOutUnsafe(wB, rB, temp2);</span>
+<span class="nc" id="L239">    Vec2.crossToOutUnsafe(wA, rA, temp3);</span>
+
+<span class="nc" id="L241">    temp2.addLocal(vB).subLocal(vA).subLocal(temp3);</span>
+<span class="nc" id="L242">    float speed = Vec2.dot(d, temp) + Vec2.dot(axis, temp2);</span>
+
+<span class="nc" id="L244">    pool.pushVec2(9);</span>
+
+<span class="nc" id="L246">    return speed;</span>
+  }
+
+  public float getJointTranslation() {
+<span class="nc" id="L250">    Vec2 pA = pool.popVec2(), pB = pool.popVec2(), axis = pool.popVec2();</span>
+<span class="nc" id="L251">    m_bodyA.getWorldPointToOut(m_localAnchorA, pA);</span>
+<span class="nc" id="L252">    m_bodyB.getWorldPointToOut(m_localAnchorB, pB);</span>
+<span class="nc" id="L253">    m_bodyA.getWorldVectorToOutUnsafe(m_localXAxisA, axis);</span>
+<span class="nc" id="L254">    pB.subLocal(pA);</span>
+<span class="nc" id="L255">    float translation = Vec2.dot(pB, axis);</span>
+<span class="nc" id="L256">    pool.pushVec2(3);</span>
+<span class="nc" id="L257">    return translation;</span>
+  }
+
+  /**
+   * Is the joint limit enabled?
+   * 
+   * @return
+   */
+  public boolean isLimitEnabled() {
+<span class="nc" id="L266">    return m_enableLimit;</span>
+  }
+
+  /**
+   * Enable/disable the joint limit.
+   * 
+   * @param flag
+   */
+  public void enableLimit(boolean flag) {
+<span class="nc bnc" id="L275" title="All 2 branches missed.">    if (flag != m_enableLimit) {</span>
+<span class="nc" id="L276">      m_bodyA.setAwake(true);</span>
+<span class="nc" id="L277">      m_bodyB.setAwake(true);</span>
+<span class="nc" id="L278">      m_enableLimit = flag;</span>
+<span class="nc" id="L279">      m_impulse.z = 0.0f;</span>
+    }
+<span class="nc" id="L281">  }</span>
+
+  /**
+   * Get the lower joint limit, usually in meters.
+   * 
+   * @return
+   */
+  public float getLowerLimit() {
+<span class="nc" id="L289">    return m_lowerTranslation;</span>
+  }
+
+  /**
+   * Get the upper joint limit, usually in meters.
+   * 
+   * @return
+   */
+  public float getUpperLimit() {
+<span class="nc" id="L298">    return m_upperTranslation;</span>
+  }
+
+  /**
+   * Set the joint limits, usually in meters.
+   * 
+   * @param lower
+   * @param upper
+   */
+  public void setLimits(float lower, float upper) {
+<span class="nc bnc" id="L308" title="All 4 branches missed.">    assert (lower &lt;= upper);</span>
+<span class="nc bnc" id="L309" title="All 4 branches missed.">    if (lower != m_lowerTranslation || upper != m_upperTranslation) {</span>
+<span class="nc" id="L310">      m_bodyA.setAwake(true);</span>
+<span class="nc" id="L311">      m_bodyB.setAwake(true);</span>
+<span class="nc" id="L312">      m_lowerTranslation = lower;</span>
+<span class="nc" id="L313">      m_upperTranslation = upper;</span>
+<span class="nc" id="L314">      m_impulse.z = 0.0f;</span>
+    }
+<span class="nc" id="L316">  }</span>
+
+  /**
+   * Is the joint motor enabled?
+   * 
+   * @return
+   */
+  public boolean isMotorEnabled() {
+<span class="nc" id="L324">    return m_enableMotor;</span>
+  }
+
+  /**
+   * Enable/disable the joint motor.
+   * 
+   * @param flag
+   */
+  public void enableMotor(boolean flag) {
+<span class="nc" id="L333">    m_bodyA.setAwake(true);</span>
+<span class="nc" id="L334">    m_bodyB.setAwake(true);</span>
+<span class="nc" id="L335">    m_enableMotor = flag;</span>
+<span class="nc" id="L336">  }</span>
+
+  /**
+   * Set the motor speed, usually in meters per second.
+   * 
+   * @param speed
+   */
+  public void setMotorSpeed(float speed) {
+<span class="nc" id="L344">    m_bodyA.setAwake(true);</span>
+<span class="nc" id="L345">    m_bodyB.setAwake(true);</span>
+<span class="nc" id="L346">    m_motorSpeed = speed;</span>
+<span class="nc" id="L347">  }</span>
+
+  /**
+   * Get the motor speed, usually in meters per second.
+   * 
+   * @return
+   */
+  public float getMotorSpeed() {
+<span class="nc" id="L355">    return m_motorSpeed;</span>
+  }
+
+  /**
+   * Set the maximum motor force, usually in N.
+   * 
+   * @param force
+   */
+  public void setMaxMotorForce(float force) {
+<span class="nc" id="L364">    m_bodyA.setAwake(true);</span>
+<span class="nc" id="L365">    m_bodyB.setAwake(true);</span>
+<span class="nc" id="L366">    m_maxMotorForce = force;</span>
+<span class="nc" id="L367">  }</span>
+
+  /**
+   * Get the current motor force, usually in N.
+   * 
+   * @param inv_dt
+   * @return
+   */
+  public float getMotorForce(float inv_dt) {
+<span class="nc" id="L376">    return m_motorImpulse * inv_dt;</span>
+  }
+
+  public float getMaxMotorForce() {
+<span class="nc" id="L380">    return m_maxMotorForce;</span>
+  }
+
+  public float getReferenceAngle() {
+<span class="nc" id="L384">    return m_referenceAngle;</span>
+  }
+
+  public Vec2 getLocalAxisA() {
+<span class="nc" id="L388">    return m_localXAxisA;</span>
+  }
+
+  @Override
+  public void initVelocityConstraints(final SolverData data) {
+<span class="nc" id="L393">    m_indexA = m_bodyA.m_islandIndex;</span>
+<span class="nc" id="L394">    m_indexB = m_bodyB.m_islandIndex;</span>
+<span class="nc" id="L395">    m_localCenterA.set(m_bodyA.m_sweep.localCenter);</span>
+<span class="nc" id="L396">    m_localCenterB.set(m_bodyB.m_sweep.localCenter);</span>
+<span class="nc" id="L397">    m_invMassA = m_bodyA.m_invMass;</span>
+<span class="nc" id="L398">    m_invMassB = m_bodyB.m_invMass;</span>
+<span class="nc" id="L399">    m_invIA = m_bodyA.m_invI;</span>
+<span class="nc" id="L400">    m_invIB = m_bodyB.m_invI;</span>
+
+<span class="nc" id="L402">    Vec2 cA = data.positions[m_indexA].c;</span>
+<span class="nc" id="L403">    float aA = data.positions[m_indexA].a;</span>
+<span class="nc" id="L404">    Vec2 vA = data.velocities[m_indexA].v;</span>
+<span class="nc" id="L405">    float wA = data.velocities[m_indexA].w;</span>
+
+<span class="nc" id="L407">    Vec2 cB = data.positions[m_indexB].c;</span>
+<span class="nc" id="L408">    float aB = data.positions[m_indexB].a;</span>
+<span class="nc" id="L409">    Vec2 vB = data.velocities[m_indexB].v;</span>
+<span class="nc" id="L410">    float wB = data.velocities[m_indexB].w;</span>
+
+<span class="nc" id="L412">    final Rot qA = pool.popRot();</span>
+<span class="nc" id="L413">    final Rot qB = pool.popRot();</span>
+<span class="nc" id="L414">    final Vec2 d = pool.popVec2();</span>
+<span class="nc" id="L415">    final Vec2 temp = pool.popVec2();</span>
+<span class="nc" id="L416">    final Vec2 rA = pool.popVec2();</span>
+<span class="nc" id="L417">    final Vec2 rB = pool.popVec2();</span>
+
+<span class="nc" id="L419">    qA.set(aA);</span>
+<span class="nc" id="L420">    qB.set(aB);</span>
+
+    // Compute the effective masses.
+<span class="nc" id="L423">    Rot.mulToOutUnsafe(qA, d.set(m_localAnchorA).subLocal(m_localCenterA), rA);</span>
+<span class="nc" id="L424">    Rot.mulToOutUnsafe(qB, d.set(m_localAnchorB).subLocal(m_localCenterB), rB);</span>
+<span class="nc" id="L425">    d.set(cB).subLocal(cA).addLocal(rB).subLocal(rA);</span>
+
+<span class="nc" id="L427">    float mA = m_invMassA, mB = m_invMassB;</span>
+<span class="nc" id="L428">    float iA = m_invIA, iB = m_invIB;</span>
+
+    // Compute motor Jacobian and effective mass.
+    {
+<span class="nc" id="L432">      Rot.mulToOutUnsafe(qA, m_localXAxisA, m_axis);</span>
+<span class="nc" id="L433">      temp.set(d).addLocal(rA);</span>
+<span class="nc" id="L434">      m_a1 = Vec2.cross(temp, m_axis);</span>
+<span class="nc" id="L435">      m_a2 = Vec2.cross(rB, m_axis);</span>
+
+<span class="nc" id="L437">      m_motorMass = mA + mB + iA * m_a1 * m_a1 + iB * m_a2 * m_a2;</span>
+<span class="nc bnc" id="L438" title="All 2 branches missed.">      if (m_motorMass &gt; 0.0f) {</span>
+<span class="nc" id="L439">        m_motorMass = 1.0f / m_motorMass;</span>
+      }
+    }
+
+    // Prismatic constraint.
+    {
+<span class="nc" id="L445">      Rot.mulToOutUnsafe(qA, m_localYAxisA, m_perp);</span>
+
+<span class="nc" id="L447">      temp.set(d).addLocal(rA);</span>
+<span class="nc" id="L448">      m_s1 = Vec2.cross(temp, m_perp);</span>
+<span class="nc" id="L449">      m_s2 = Vec2.cross(rB, m_perp);</span>
+
+<span class="nc" id="L451">      float k11 = mA + mB + iA * m_s1 * m_s1 + iB * m_s2 * m_s2;</span>
+<span class="nc" id="L452">      float k12 = iA * m_s1 + iB * m_s2;</span>
+<span class="nc" id="L453">      float k13 = iA * m_s1 * m_a1 + iB * m_s2 * m_a2;</span>
+<span class="nc" id="L454">      float k22 = iA + iB;</span>
+<span class="nc bnc" id="L455" title="All 2 branches missed.">      if (k22 == 0.0f) {</span>
+        // For bodies with fixed rotation.
+<span class="nc" id="L457">        k22 = 1.0f;</span>
+      }
+<span class="nc" id="L459">      float k23 = iA * m_a1 + iB * m_a2;</span>
+<span class="nc" id="L460">      float k33 = mA + mB + iA * m_a1 * m_a1 + iB * m_a2 * m_a2;</span>
+
+<span class="nc" id="L462">      m_K.ex.set(k11, k12, k13);</span>
+<span class="nc" id="L463">      m_K.ey.set(k12, k22, k23);</span>
+<span class="nc" id="L464">      m_K.ez.set(k13, k23, k33);</span>
+    }
+
+    // Compute motor and limit terms.
+<span class="nc bnc" id="L468" title="All 2 branches missed.">    if (m_enableLimit) {</span>
+
+<span class="nc" id="L470">      float jointTranslation = Vec2.dot(m_axis, d);</span>
+<span class="nc bnc" id="L471" title="All 2 branches missed.">      if (MathUtils.abs(m_upperTranslation - m_lowerTranslation) &lt; 2.0f * Settings.linearSlop) {</span>
+<span class="nc" id="L472">        m_limitState = LimitState.EQUAL;</span>
+<span class="nc bnc" id="L473" title="All 2 branches missed.">      } else if (jointTranslation &lt;= m_lowerTranslation) {</span>
+<span class="nc bnc" id="L474" title="All 2 branches missed.">        if (m_limitState != LimitState.AT_LOWER) {</span>
+<span class="nc" id="L475">          m_limitState = LimitState.AT_LOWER;</span>
+<span class="nc" id="L476">          m_impulse.z = 0.0f;</span>
+        }
+<span class="nc bnc" id="L478" title="All 2 branches missed.">      } else if (jointTranslation &gt;= m_upperTranslation) {</span>
+<span class="nc bnc" id="L479" title="All 2 branches missed.">        if (m_limitState != LimitState.AT_UPPER) {</span>
+<span class="nc" id="L480">          m_limitState = LimitState.AT_UPPER;</span>
+<span class="nc" id="L481">          m_impulse.z = 0.0f;</span>
+        }
+      } else {
+<span class="nc" id="L484">        m_limitState = LimitState.INACTIVE;</span>
+<span class="nc" id="L485">        m_impulse.z = 0.0f;</span>
+      }
+<span class="nc" id="L487">    } else {</span>
+<span class="nc" id="L488">      m_limitState = LimitState.INACTIVE;</span>
+<span class="nc" id="L489">      m_impulse.z = 0.0f;</span>
+    }
+
+<span class="nc bnc" id="L492" title="All 2 branches missed.">    if (m_enableMotor == false) {</span>
+<span class="nc" id="L493">      m_motorImpulse = 0.0f;</span>
+    }
+
+<span class="nc bnc" id="L496" title="All 2 branches missed.">    if (data.step.warmStarting) {</span>
+      // Account for variable time step.
+<span class="nc" id="L498">      m_impulse.mulLocal(data.step.dtRatio);</span>
+<span class="nc" id="L499">      m_motorImpulse *= data.step.dtRatio;</span>
+
+<span class="nc" id="L501">      final Vec2 P = pool.popVec2();</span>
+<span class="nc" id="L502">      temp.set(m_axis).mulLocal(m_motorImpulse + m_impulse.z);</span>
+<span class="nc" id="L503">      P.set(m_perp).mulLocal(m_impulse.x).addLocal(temp);</span>
+
+<span class="nc" id="L505">      float LA = m_impulse.x * m_s1 + m_impulse.y + (m_motorImpulse + m_impulse.z) * m_a1;</span>
+<span class="nc" id="L506">      float LB = m_impulse.x * m_s2 + m_impulse.y + (m_motorImpulse + m_impulse.z) * m_a2;</span>
+
+<span class="nc" id="L508">      vA.x -= mA * P.x;</span>
+<span class="nc" id="L509">      vA.y -= mA * P.y;</span>
+<span class="nc" id="L510">      wA -= iA * LA;</span>
+
+<span class="nc" id="L512">      vB.x += mB * P.x;</span>
+<span class="nc" id="L513">      vB.y += mB * P.y;</span>
+<span class="nc" id="L514">      wB += iB * LB;</span>
+
+<span class="nc" id="L516">      pool.pushVec2(1);</span>
+<span class="nc" id="L517">    } else {</span>
+<span class="nc" id="L518">      m_impulse.setZero();</span>
+<span class="nc" id="L519">      m_motorImpulse = 0.0f;</span>
+    }
+
+    // data.velocities[m_indexA].v.set(vA);
+<span class="nc" id="L523">    data.velocities[m_indexA].w = wA;</span>
+    // data.velocities[m_indexB].v.set(vB);
+<span class="nc" id="L525">    data.velocities[m_indexB].w = wB;</span>
+
+<span class="nc" id="L527">    pool.pushRot(2);</span>
+<span class="nc" id="L528">    pool.pushVec2(4);</span>
+<span class="nc" id="L529">  }</span>
+
+  @Override
+  public void solveVelocityConstraints(final SolverData data) {
+<span class="nc" id="L533">    Vec2 vA = data.velocities[m_indexA].v;</span>
+<span class="nc" id="L534">    float wA = data.velocities[m_indexA].w;</span>
+<span class="nc" id="L535">    Vec2 vB = data.velocities[m_indexB].v;</span>
+<span class="nc" id="L536">    float wB = data.velocities[m_indexB].w;</span>
+
+<span class="nc" id="L538">    float mA = m_invMassA, mB = m_invMassB;</span>
+<span class="nc" id="L539">    float iA = m_invIA, iB = m_invIB;</span>
+
+<span class="nc" id="L541">    final Vec2 temp = pool.popVec2();</span>
+
+    // Solve linear motor constraint.
+<span class="nc bnc" id="L544" title="All 4 branches missed.">    if (m_enableMotor &amp;&amp; m_limitState != LimitState.EQUAL) {</span>
+<span class="nc" id="L545">      temp.set(vB).subLocal(vA);</span>
+<span class="nc" id="L546">      float Cdot = Vec2.dot(m_axis, temp) + m_a2 * wB - m_a1 * wA;</span>
+<span class="nc" id="L547">      float impulse = m_motorMass * (m_motorSpeed - Cdot);</span>
+<span class="nc" id="L548">      float oldImpulse = m_motorImpulse;</span>
+<span class="nc" id="L549">      float maxImpulse = data.step.dt * m_maxMotorForce;</span>
+<span class="nc" id="L550">      m_motorImpulse = MathUtils.clamp(m_motorImpulse + impulse, -maxImpulse, maxImpulse);</span>
+<span class="nc" id="L551">      impulse = m_motorImpulse - oldImpulse;</span>
+
+<span class="nc" id="L553">      final Vec2 P = pool.popVec2();</span>
+<span class="nc" id="L554">      P.set(m_axis).mulLocal(impulse);</span>
+<span class="nc" id="L555">      float LA = impulse * m_a1;</span>
+<span class="nc" id="L556">      float LB = impulse * m_a2;</span>
+
+<span class="nc" id="L558">      vA.x -= mA * P.x;</span>
+<span class="nc" id="L559">      vA.y -= mA * P.y;</span>
+<span class="nc" id="L560">      wA -= iA * LA;</span>
+
+<span class="nc" id="L562">      vB.x += mB * P.x;</span>
+<span class="nc" id="L563">      vB.y += mB * P.y;</span>
+<span class="nc" id="L564">      wB += iB * LB;</span>
+
+<span class="nc" id="L566">      pool.pushVec2(1);</span>
+    }
+
+<span class="nc" id="L569">    final Vec2 Cdot1 = pool.popVec2();</span>
+<span class="nc" id="L570">    temp.set(vB).subLocal(vA);</span>
+<span class="nc" id="L571">    Cdot1.x = Vec2.dot(m_perp, temp) + m_s2 * wB - m_s1 * wA;</span>
+<span class="nc" id="L572">    Cdot1.y = wB - wA;</span>
+    // System.out.println(Cdot1);
+
+<span class="nc bnc" id="L575" title="All 4 branches missed.">    if (m_enableLimit &amp;&amp; m_limitState != LimitState.INACTIVE) {</span>
+      // Solve prismatic and limit constraint in block form.
+      float Cdot2;
+<span class="nc" id="L578">      temp.set(vB).subLocal(vA);</span>
+<span class="nc" id="L579">      Cdot2 = Vec2.dot(m_axis, temp) + m_a2 * wB - m_a1 * wA;</span>
+
+<span class="nc" id="L581">      final Vec3 Cdot = pool.popVec3();</span>
+<span class="nc" id="L582">      Cdot.set(Cdot1.x, Cdot1.y, Cdot2);</span>
+
+<span class="nc" id="L584">      final Vec3 f1 = pool.popVec3();</span>
+<span class="nc" id="L585">      final Vec3 df = pool.popVec3();</span>
+
+<span class="nc" id="L587">      f1.set(m_impulse);</span>
+<span class="nc" id="L588">      m_K.solve33ToOut(Cdot.negateLocal(), df);</span>
+      // Cdot.negateLocal(); not used anymore
+<span class="nc" id="L590">      m_impulse.addLocal(df);</span>
+
+<span class="nc bnc" id="L592" title="All 2 branches missed.">      if (m_limitState == LimitState.AT_LOWER) {</span>
+<span class="nc" id="L593">        m_impulse.z = MathUtils.max(m_impulse.z, 0.0f);</span>
+<span class="nc bnc" id="L594" title="All 2 branches missed.">      } else if (m_limitState == LimitState.AT_UPPER) {</span>
+<span class="nc" id="L595">        m_impulse.z = MathUtils.min(m_impulse.z, 0.0f);</span>
+      }
+
+      // f2(1:2) = invK(1:2,1:2) * (-Cdot(1:2) - K(1:2,3) * (f2(3) - f1(3))) +
+      // f1(1:2)
+<span class="nc" id="L600">      final Vec2 b = pool.popVec2();</span>
+<span class="nc" id="L601">      final Vec2 f2r = pool.popVec2();</span>
+
+<span class="nc" id="L603">      temp.set(m_K.ez.x, m_K.ez.y).mulLocal(m_impulse.z - f1.z);</span>
+<span class="nc" id="L604">      b.set(Cdot1).negateLocal().subLocal(temp);</span>
+
+<span class="nc" id="L606">      m_K.solve22ToOut(b, f2r);</span>
+<span class="nc" id="L607">      f2r.addLocal(f1.x, f1.y);</span>
+<span class="nc" id="L608">      m_impulse.x = f2r.x;</span>
+<span class="nc" id="L609">      m_impulse.y = f2r.y;</span>
+
+<span class="nc" id="L611">      df.set(m_impulse).subLocal(f1);</span>
+
+<span class="nc" id="L613">      final Vec2 P = pool.popVec2();</span>
+<span class="nc" id="L614">      temp.set(m_axis).mulLocal(df.z);</span>
+<span class="nc" id="L615">      P.set(m_perp).mulLocal(df.x).addLocal(temp);</span>
+
+<span class="nc" id="L617">      float LA = df.x * m_s1 + df.y + df.z * m_a1;</span>
+<span class="nc" id="L618">      float LB = df.x * m_s2 + df.y + df.z * m_a2;</span>
+
+<span class="nc" id="L620">      vA.x -= mA * P.x;</span>
+<span class="nc" id="L621">      vA.y -= mA * P.y;</span>
+<span class="nc" id="L622">      wA -= iA * LA;</span>
+
+<span class="nc" id="L624">      vB.x += mB * P.x;</span>
+<span class="nc" id="L625">      vB.y += mB * P.y;</span>
+<span class="nc" id="L626">      wB += iB * LB;</span>
+
+<span class="nc" id="L628">      pool.pushVec2(3);</span>
+<span class="nc" id="L629">      pool.pushVec3(3);</span>
+<span class="nc" id="L630">    } else {</span>
+      // Limit is inactive, just solve the prismatic constraint in block form.
+<span class="nc" id="L632">      final Vec2 df = pool.popVec2();</span>
+<span class="nc" id="L633">      m_K.solve22ToOut(Cdot1.negateLocal(), df);</span>
+<span class="nc" id="L634">      Cdot1.negateLocal();</span>
+
+<span class="nc" id="L636">      m_impulse.x += df.x;</span>
+<span class="nc" id="L637">      m_impulse.y += df.y;</span>
+
+<span class="nc" id="L639">      final Vec2 P = pool.popVec2();</span>
+<span class="nc" id="L640">      P.set(m_perp).mulLocal(df.x);</span>
+<span class="nc" id="L641">      float LA = df.x * m_s1 + df.y;</span>
+<span class="nc" id="L642">      float LB = df.x * m_s2 + df.y;</span>
+
+<span class="nc" id="L644">      vA.x -= mA * P.x;</span>
+<span class="nc" id="L645">      vA.y -= mA * P.y;</span>
+<span class="nc" id="L646">      wA -= iA * LA;</span>
+
+<span class="nc" id="L648">      vB.x += mB * P.x;</span>
+<span class="nc" id="L649">      vB.y += mB * P.y;</span>
+<span class="nc" id="L650">      wB += iB * LB;</span>
+
+<span class="nc" id="L652">      pool.pushVec2(2);</span>
+    }
+
+    // data.velocities[m_indexA].v.set(vA);
+<span class="nc" id="L656">    data.velocities[m_indexA].w = wA;</span>
+    // data.velocities[m_indexB].v.set(vB);
+<span class="nc" id="L658">    data.velocities[m_indexB].w = wB;</span>
+
+<span class="nc" id="L660">    pool.pushVec2(2);</span>
+<span class="nc" id="L661">  }</span>
+
+
+  @Override
+  public boolean solvePositionConstraints(final SolverData data) {
+
+<span class="nc" id="L667">    final Rot qA = pool.popRot();</span>
+<span class="nc" id="L668">    final Rot qB = pool.popRot();</span>
+<span class="nc" id="L669">    final Vec2 rA = pool.popVec2();</span>
+<span class="nc" id="L670">    final Vec2 rB = pool.popVec2();</span>
+<span class="nc" id="L671">    final Vec2 d = pool.popVec2();</span>
+<span class="nc" id="L672">    final Vec2 axis = pool.popVec2();</span>
+<span class="nc" id="L673">    final Vec2 perp = pool.popVec2();</span>
+<span class="nc" id="L674">    final Vec2 temp = pool.popVec2();</span>
+<span class="nc" id="L675">    final Vec2 C1 = pool.popVec2();</span>
+
+<span class="nc" id="L677">    final Vec3 impulse = pool.popVec3();</span>
+
+<span class="nc" id="L679">    Vec2 cA = data.positions[m_indexA].c;</span>
+<span class="nc" id="L680">    float aA = data.positions[m_indexA].a;</span>
+<span class="nc" id="L681">    Vec2 cB = data.positions[m_indexB].c;</span>
+<span class="nc" id="L682">    float aB = data.positions[m_indexB].a;</span>
+
+<span class="nc" id="L684">    qA.set(aA);</span>
+<span class="nc" id="L685">    qB.set(aB);</span>
+
+<span class="nc" id="L687">    float mA = m_invMassA, mB = m_invMassB;</span>
+<span class="nc" id="L688">    float iA = m_invIA, iB = m_invIB;</span>
+
+    // Compute fresh Jacobians
+<span class="nc" id="L691">    Rot.mulToOutUnsafe(qA, temp.set(m_localAnchorA).subLocal(m_localCenterA), rA);</span>
+<span class="nc" id="L692">    Rot.mulToOutUnsafe(qB, temp.set(m_localAnchorB).subLocal(m_localCenterB), rB);</span>
+<span class="nc" id="L693">    d.set(cB).addLocal(rB).subLocal(cA).subLocal(rA);</span>
+
+<span class="nc" id="L695">    Rot.mulToOutUnsafe(qA, m_localXAxisA, axis);</span>
+<span class="nc" id="L696">    float a1 = Vec2.cross(temp.set(d).addLocal(rA), axis);</span>
+<span class="nc" id="L697">    float a2 = Vec2.cross(rB, axis);</span>
+<span class="nc" id="L698">    Rot.mulToOutUnsafe(qA, m_localYAxisA, perp);</span>
+
+<span class="nc" id="L700">    float s1 = Vec2.cross(temp.set(d).addLocal(rA), perp);</span>
+<span class="nc" id="L701">    float s2 = Vec2.cross(rB, perp);</span>
+
+<span class="nc" id="L703">    C1.x = Vec2.dot(perp, d);</span>
+<span class="nc" id="L704">    C1.y = aB - aA - m_referenceAngle;</span>
+
+<span class="nc" id="L706">    float linearError = MathUtils.abs(C1.x);</span>
+<span class="nc" id="L707">    float angularError = MathUtils.abs(C1.y);</span>
+
+<span class="nc" id="L709">    boolean active = false;</span>
+<span class="nc" id="L710">    float C2 = 0.0f;</span>
+<span class="nc bnc" id="L711" title="All 2 branches missed.">    if (m_enableLimit) {</span>
+<span class="nc" id="L712">      float translation = Vec2.dot(axis, d);</span>
+<span class="nc bnc" id="L713" title="All 2 branches missed.">      if (MathUtils.abs(m_upperTranslation - m_lowerTranslation) &lt; 2.0f * Settings.linearSlop) {</span>
+        // Prevent large angular corrections
+<span class="nc" id="L715">        C2 =</span>
+<span class="nc" id="L716">            MathUtils.clamp(translation, -Settings.maxLinearCorrection,</span>
+                Settings.maxLinearCorrection);
+<span class="nc" id="L718">        linearError = MathUtils.max(linearError, MathUtils.abs(translation));</span>
+<span class="nc" id="L719">        active = true;</span>
+<span class="nc bnc" id="L720" title="All 2 branches missed.">      } else if (translation &lt;= m_lowerTranslation) {</span>
+        // Prevent large linear corrections and allow some slop.
+<span class="nc" id="L722">        C2 =</span>
+<span class="nc" id="L723">            MathUtils.clamp(translation - m_lowerTranslation + Settings.linearSlop,</span>
+                -Settings.maxLinearCorrection, 0.0f);
+<span class="nc" id="L725">        linearError = MathUtils.max(linearError, m_lowerTranslation - translation);</span>
+<span class="nc" id="L726">        active = true;</span>
+<span class="nc bnc" id="L727" title="All 2 branches missed.">      } else if (translation &gt;= m_upperTranslation) {</span>
+        // Prevent large linear corrections and allow some slop.
+<span class="nc" id="L729">        C2 =</span>
+<span class="nc" id="L730">            MathUtils.clamp(translation - m_upperTranslation - Settings.linearSlop, 0.0f,</span>
+                Settings.maxLinearCorrection);
+<span class="nc" id="L732">        linearError = MathUtils.max(linearError, translation - m_upperTranslation);</span>
+<span class="nc" id="L733">        active = true;</span>
+      }
+    }
+
+<span class="nc bnc" id="L737" title="All 2 branches missed.">    if (active) {</span>
+<span class="nc" id="L738">      float k11 = mA + mB + iA * s1 * s1 + iB * s2 * s2;</span>
+<span class="nc" id="L739">      float k12 = iA * s1 + iB * s2;</span>
+<span class="nc" id="L740">      float k13 = iA * s1 * a1 + iB * s2 * a2;</span>
+<span class="nc" id="L741">      float k22 = iA + iB;</span>
+<span class="nc bnc" id="L742" title="All 2 branches missed.">      if (k22 == 0.0f) {</span>
+        // For fixed rotation
+<span class="nc" id="L744">        k22 = 1.0f;</span>
+      }
+<span class="nc" id="L746">      float k23 = iA * a1 + iB * a2;</span>
+<span class="nc" id="L747">      float k33 = mA + mB + iA * a1 * a1 + iB * a2 * a2;</span>
+
+<span class="nc" id="L749">      final Mat33 K = pool.popMat33();</span>
+<span class="nc" id="L750">      K.ex.set(k11, k12, k13);</span>
+<span class="nc" id="L751">      K.ey.set(k12, k22, k23);</span>
+<span class="nc" id="L752">      K.ez.set(k13, k23, k33);</span>
+
+<span class="nc" id="L754">      final Vec3 C = pool.popVec3();</span>
+<span class="nc" id="L755">      C.x = C1.x;</span>
+<span class="nc" id="L756">      C.y = C1.y;</span>
+<span class="nc" id="L757">      C.z = C2;</span>
+
+<span class="nc" id="L759">      K.solve33ToOut(C.negateLocal(), impulse);</span>
+<span class="nc" id="L760">      pool.pushVec3(1);</span>
+<span class="nc" id="L761">      pool.pushMat33(1);</span>
+<span class="nc" id="L762">    } else {</span>
+<span class="nc" id="L763">      float k11 = mA + mB + iA * s1 * s1 + iB * s2 * s2;</span>
+<span class="nc" id="L764">      float k12 = iA * s1 + iB * s2;</span>
+<span class="nc" id="L765">      float k22 = iA + iB;</span>
+<span class="nc bnc" id="L766" title="All 2 branches missed.">      if (k22 == 0.0f) {</span>
+<span class="nc" id="L767">        k22 = 1.0f;</span>
+      }
+
+<span class="nc" id="L770">      final Mat22 K = pool.popMat22();</span>
+<span class="nc" id="L771">      K.ex.set(k11, k12);</span>
+<span class="nc" id="L772">      K.ey.set(k12, k22);</span>
+
+      // temp is impulse1
+<span class="nc" id="L775">      K.solveToOut(C1.negateLocal(), temp);</span>
+<span class="nc" id="L776">      C1.negateLocal();</span>
+
+<span class="nc" id="L778">      impulse.x = temp.x;</span>
+<span class="nc" id="L779">      impulse.y = temp.y;</span>
+<span class="nc" id="L780">      impulse.z = 0.0f;</span>
+
+<span class="nc" id="L782">      pool.pushMat22(1);</span>
+    }
+
+<span class="nc" id="L785">    float Px = impulse.x * perp.x + impulse.z * axis.x;</span>
+<span class="nc" id="L786">    float Py = impulse.x * perp.y + impulse.z * axis.y;</span>
+<span class="nc" id="L787">    float LA = impulse.x * s1 + impulse.y + impulse.z * a1;</span>
+<span class="nc" id="L788">    float LB = impulse.x * s2 + impulse.y + impulse.z * a2;</span>
+
+<span class="nc" id="L790">    cA.x -= mA * Px;</span>
+<span class="nc" id="L791">    cA.y -= mA * Py;</span>
+<span class="nc" id="L792">    aA -= iA * LA;</span>
+<span class="nc" id="L793">    cB.x += mB * Px;</span>
+<span class="nc" id="L794">    cB.y += mB * Py;</span>
+<span class="nc" id="L795">    aB += iB * LB;</span>
+
+    // data.positions[m_indexA].c.set(cA);
+<span class="nc" id="L798">    data.positions[m_indexA].a = aA;</span>
+    // data.positions[m_indexB].c.set(cB);
+<span class="nc" id="L800">    data.positions[m_indexB].a = aB;</span>
+
+<span class="nc" id="L802">    pool.pushVec2(7);</span>
+<span class="nc" id="L803">    pool.pushVec3(1);</span>
+<span class="nc" id="L804">    pool.pushRot(2);</span>
+
+<span class="nc bnc" id="L806" title="All 4 branches missed.">    return linearError &lt;= Settings.linearSlop &amp;&amp; angularError &lt;= Settings.angularSlop;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

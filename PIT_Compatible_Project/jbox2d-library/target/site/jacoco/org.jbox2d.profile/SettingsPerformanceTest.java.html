@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SettingsPerformanceTest.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">jbox2d-library</a> &gt; <a href="index.source.html" class="el_package">org.jbox2d.profile</a> &gt; <span class="el_source">SettingsPerformanceTest.java</span></div><h1>SettingsPerformanceTest.java</h1><pre class="source lang-java linenums">package org.jbox2d.profile;
+
+import org.jbox2d.common.Settings;
+
+public abstract class SettingsPerformanceTest extends BasicPerformanceTest {
+
+<span class="nc" id="L7">  private static int NUM_TESTS = 8;</span>
+
+  public SettingsPerformanceTest(int iters) {
+<span class="nc" id="L10">    super(NUM_TESTS, iters);</span>
+<span class="nc" id="L11">  }</span>
+
+  @Override
+  public void runTest(int testNum) {
+<span class="nc bnc" id="L15" title="All 2 branches missed.">    Settings.FAST_ABS = testNum == 1;</span>
+<span class="nc bnc" id="L16" title="All 2 branches missed.">    Settings.FAST_ATAN2 = testNum == 2;</span>
+<span class="nc bnc" id="L17" title="All 2 branches missed.">    Settings.FAST_CEIL = testNum == 3;</span>
+<span class="nc bnc" id="L18" title="All 2 branches missed.">    Settings.FAST_FLOOR = testNum == 4;</span>
+<span class="nc bnc" id="L19" title="All 2 branches missed.">    Settings.FAST_ROUND = testNum == 5;</span>
+<span class="nc bnc" id="L20" title="All 2 branches missed.">    Settings.SINCOS_LUT_ENABLED = testNum == 6;</span>
+
+<span class="nc bnc" id="L22" title="All 2 branches missed.">    if (testNum == 7) {</span>
+<span class="nc" id="L23">      Settings.FAST_ABS = true;</span>
+<span class="nc" id="L24">      Settings.FAST_ATAN2 = true;</span>
+<span class="nc" id="L25">      Settings.FAST_CEIL = true;</span>
+<span class="nc" id="L26">      Settings.FAST_FLOOR = true;</span>
+<span class="nc" id="L27">      Settings.FAST_ROUND = true;</span>
+<span class="nc" id="L28">      Settings.SINCOS_LUT_ENABLED = true;</span>
+    }
+
+<span class="nc" id="L31">    runBenchmarkWorld();</span>
+<span class="nc" id="L32">  }</span>
+
+  public abstract void runBenchmarkWorld();
+
+  @Override
+  public String getTestName(int testNum) {
+<span class="nc bnc" id="L38" title="All 9 branches missed.">    switch (testNum) {</span>
+      case 0:
+<span class="nc" id="L40">        return &quot;No optimizations&quot;;</span>
+      case 1:
+<span class="nc" id="L42">        return &quot;Fast abs&quot;;</span>
+      case 2:
+<span class="nc" id="L44">        return &quot;Fast atan2&quot;;</span>
+      case 3:
+<span class="nc" id="L46">        return &quot;Fast ceil&quot;;</span>
+      case 4:
+<span class="nc" id="L48">        return &quot;Fast floor&quot;;</span>
+      case 5:
+<span class="nc" id="L50">        return &quot;Fast round&quot;;</span>
+      case 6:
+<span class="nc" id="L52">        return &quot;Sincos lookup table&quot;;</span>
+      case 7:
+<span class="nc" id="L54">        return &quot;All optimizations on&quot;;</span>
+      default:
+<span class="nc" id="L56">        return &quot;&quot;;</span>
+    }
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>
